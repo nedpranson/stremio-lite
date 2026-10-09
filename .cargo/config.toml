@@ -8,19 +8,6 @@ STREAM_SERVER_SKIP_WINDOWS_RESOURCES = "1"
 VCPKGRS_TRIPLET = "x64-windows-v3-static-md-release"
 VCPKG_INSTALLED_DIR = { value = "vcpkg_installed", relative = true }
 
-[unstable]
-# The repository pins nightly in rust-toolchain.toml, so keep the compiler's
-# parallel frontend profile-scoped instead of duplicating it in every target.
-profile-rustflags = true
-
-[profile.dev]
-# Four threads match the smallest CI runners and still accelerate the large
-# Slint/application crates without the oversubscription of eight per rustc.
-rustflags = ["-Zthreads=4"]
-
-[profile.release]
-rustflags = ["-Zthreads=4"]
-
 [target.'cfg(all(target_arch = "x86_64", windows, target_env = "msvc"))']
 # Match the pinned MPV x86-64-v3 baseline. Rust and native libraries use the
 # dynamic MSVC runtime so rust-skia's published Windows binaries can be used.
