@@ -1,9 +1,10 @@
 # stremio-native patches to `i-slint-core`
 
-Vendored verbatim from crates.io `i-slint-core 1.17.1`, then patched to give
-scrolling browser physics. Wired up through `[patch.crates-io]` in the root
-`Cargo.toml`. Every change is marked with a `STREMIO-NATIVE PATCH` comment, so
-`rg "STREMIO-NATIVE PATCH"` lists the full divergence.
+Vendored verbatim from crates.io `i-slint-core 1.17.1`, then patched for
+browser-style scrolling physics and a text-selection clipping fix. Wired up
+through `[patch.crates-io]` in the root `Cargo.toml`. Every change is marked
+with a `STREMIO-NATIVE PATCH` comment, so `rg "STREMIO-NATIVE PATCH"` lists the
+full divergence.
 
 ## Why this lives in the engine
 
@@ -68,6 +69,17 @@ the input instead of restarting from the animated position each time.
 their only caller and are marked `#[expect(dead_code)]` rather than deleted, to
 keep the re-vendor diff clean. `ConstantDeceleration` itself is still live: it
 drives the fling after a touchpad or drag release.
+
+### `textlayout/sharedparley.rs`
+
+`draw_text_input` filled the selection highlight *before* `save_state()` +
+`combine_clip()`, so only the text glyphs and cursor were clipped to the field.
+`combine_clip` clips every following draw call until `restore_state`, and the
+`TextInput` item itself does not clip its own rendering, so selecting text wider
+than a single-line field painted a highlight past the field's edge.
+
+The patch moves the clip setup above `selection_geometry` and draws the
+selection inside `if render`, next to the glyphs and cursor.
 
 ## Re-vendoring a new Slint release
 

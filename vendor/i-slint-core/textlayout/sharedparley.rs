@@ -1460,11 +1460,6 @@ pub fn draw_text_input(
 
     drop(font_ctx);
 
-    layout.selection_geometry(selection_range, |selection_rect| {
-        item_renderer
-            .fill_rectangle_with_color(selection_rect, text_input.selection_background_color());
-    });
-
     item_renderer.save_state();
 
     let render = item_renderer.combine_clip(
@@ -1474,6 +1469,17 @@ pub fn draw_text_input(
     );
 
     if render {
+        // STREMIO-NATIVE PATCH: upstream filled the selection before the clip
+        // below, so selecting overflowing (single-line) text painted a
+        // highlight past the field's edge. Draw it inside the clip like the
+        // glyphs and cursor.
+        layout.selection_geometry(selection_range, |selection_rect| {
+            item_renderer.fill_rectangle_with_color(
+                selection_rect,
+                text_input.selection_background_color(),
+            );
+        });
+
         layout.draw(
             item_renderer,
             platform_fill_brush,

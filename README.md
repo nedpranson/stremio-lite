@@ -123,8 +123,7 @@ Rust and Skia:
   --x-manifest-root="$PWD" `
   --x-install-root="$PWD\vcpkg_installed" `
   --triplet=x64-windows-v3-static-md-release `
-  --overlay-triplets="$PWD\triplets" `
-  --overlay-ports="$PWD\vcpkg-overlays"
+  --overlay-triplets="$PWD\triplets"
 ```
 
 `cargo build` then discovers that exact installation through the repository's
