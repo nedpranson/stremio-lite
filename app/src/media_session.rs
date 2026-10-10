@@ -1,6 +1,8 @@
 //! OS-level playback presence: system media controls (SMTC on Windows, MPRIS on
-//! Linux, MediaRemote on macOS via `souvlaki`) plus a sleep inhibitor
-//! (`keepawake`) that holds the machine and display awake while a video plays.
+//! Linux, MediaRemote on macOS via `souvlaki`) plus a sleep inhibitor that holds
+//! the machine and display awake while a video plays. On Wayland the inhibitor
+//! is `zwp_idle_inhibit_v1` (see [`crate::idle_inhibit`]); `keepawake`'s D-Bus
+//! locks are the fallback elsewhere.
 //!
 //! Both concerns are driven by the same playback transitions and share one
 //! dedicated worker thread. That single thread is deliberate:
@@ -158,7 +160,10 @@ struct Worker {
     /// Runtime used to prepare cover art off this OS thread; `None` if the session
     /// was created outside a Tokio runtime, in which case remote covers are skipped.
     runtime: Option<tokio::runtime::Handle>,
+    /// Sleep inhibitor used when the Wayland idle inhibitor is unavailable.
     wake: Option<keepawake::KeepAwake>,
+    /// Wayland idle inhibitor on the app surface, preferred over `wake`.
+    wayland: Option<crate::idle_inhibit::Inhibitor>,
     last_metadata: Option<(String, Option<String>, Duration)>,
     last_playback: Option<(bool, Duration)>,
 }
@@ -175,6 +180,7 @@ impl Worker {
             pending_handler: Some(on_event),
             runtime,
             wake: None,
+            wayland: None,
             last_metadata: None,
             last_playback: None,
         }
@@ -379,13 +385,25 @@ impl Worker {
         }
     }
 
+    /// Whether any sleep inhibitor is currently held.
+    fn is_awake(&self) -> bool {
+        self.wake.is_some() || self.wayland.is_some()
+    }
+
     /// Hold or release the sleep inhibitor. Acquiring and releasing both happen
     /// on this worker thread, satisfying the platform's thread affinity.
+    ///
+    /// The Wayland idle inhibitor is preferred when available; `keepawake`'s
+    /// D-Bus locks are the fallback (X11, or compositors that honor them).
     fn set_wake(&mut self, awake: bool) {
-        if awake == self.wake.is_some() {
+        if awake == self.is_awake() {
             return;
         }
         if awake {
+            if let Some(inhibitor) = crate::idle_inhibit::arm() {
+                self.wayland = Some(inhibitor);
+                return;
+            }
             match keepawake::Builder::default()
                 .display(true)
                 .idle(true)
@@ -399,6 +417,7 @@ impl Worker {
             }
         } else {
             self.wake = None;
+            self.wayland = None;
         }
     }
 }

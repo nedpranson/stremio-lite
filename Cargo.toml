@@ -95,9 +95,9 @@ i-slint-renderer-skia = { path = "vendor/i-slint-renderer-skia" }
 i-slint-core = { path = "vendor/i-slint-core" }
 # Slint's winit backend ignores winit's ModifiersChanged event, so modifiers
 # only ever change on physical modifier key events. Chords injected at the
-# compositor level (Hyprland's send_key_state, used by Omarchy's universal
-# clipboard binds) carry the modifiers without a modifier key event, so a
-# pasted Ctrl+V arrived with no Control held and was typed as literal text.
+# compositor level (e.g. a synthesized universal-clipboard chord) carry the
+# modifiers without a modifier key event, so a pasted Ctrl+V arrived with no
+# Control held and was typed as literal text.
 # Forward the real modifier state. See vendor/i-slint-backend-winit/PATCHES.md.
 i-slint-backend-winit = { path = "vendor/i-slint-backend-winit" }
 

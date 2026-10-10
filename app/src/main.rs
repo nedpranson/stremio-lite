@@ -48,6 +48,7 @@ mod deep_link;
 pub mod diagnostics;
 pub mod downloads;
 mod gpu_prewarm;
+mod idle_inhibit;
 pub mod image_cache;
 pub mod integrations;
 pub mod local_library;

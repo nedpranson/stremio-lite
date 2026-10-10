@@ -664,12 +664,18 @@ pub fn install_platform_shortcuts(ui: &MainWindow, media_session: Arc<MediaSessi
     let mut dispatcher = HotkeyDispatcher::default();
     let mut native_window_style_applied = false;
     let mut media_controls_attached = false;
+    let mut idle_inhibit_captured = false;
 
     crate::window_hooks::register(ui, move |window, event| {
         if !native_window_style_applied {
             native_window_style_applied = window
                 .with_winit_window(crate::window_style::apply)
                 .unwrap_or(false);
+        }
+        if !idle_inhibit_captured {
+            idle_inhibit_captured = window
+                .with_winit_window(crate::idle_inhibit::capture)
+                .is_some();
         }
         if !media_controls_attached
             && let Some(hwnd) = window.with_winit_window(crate::window_style::window_hwnd)

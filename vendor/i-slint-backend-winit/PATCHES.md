@@ -15,13 +15,13 @@ encoded Shift/Control/Alt/Meta key codes). The winit backend never forwards
 winit's `WindowEvent::ModifiersChanged`, so a modifier that is set without a
 modifier key event is invisible to Slint.
 
-That is exactly what compositor-level shortcut injection does. Omarchy's
-universal clipboard binds (`Super+C/V/X`) go through Hyprland's
-`send_key_state`, which emits a `wl_keyboard.modifiers` event plus the target
-key — but no modifier key event. Native toolkits read the modifier state, so
-Ctrl+V works there; Slint did not, so `Ctrl` stayed released, `shortcut()`
-returned `None`, and `TextInput` inserted the literal `v`. Feeding the real
-modifier state into core fixes every injected chord, not just paste.
+That is exactly what compositor-level shortcut injection does. A compositor
+that synthesizes a key chord (a universal clipboard bound to `Super+C/V/X`, for
+instance) emits a `wl_keyboard.modifiers` event plus the target key — but no
+modifier key event. Native toolkits read the modifier state, so Ctrl+V works
+there; Slint did not, so `Ctrl` stayed released, `shortcut()` returned `None`,
+and `TextInput` inserted the literal `v`. Feeding the real modifier state into
+core fixes every injected chord, not just paste.
 
 ## The patch
 

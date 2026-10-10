@@ -263,11 +263,11 @@ impl winit::application::ApplicationHandler<SlintEvent> for EventLoopState {
 
             // STREMIO-NATIVE PATCH: Slint derives modifiers only from physical
             // modifier key events, so chords injected at the compositor level
-            // (e.g. Hyprland's `send_key_state`, which Omarchy's universal
-            // clipboard binds use) carry the modifier state without a modifier
-            // key event and their character is typed as plain text instead of
-            // acting as a shortcut. Forward winit's real modifier state as the
-            // encoded key events `i-slint-core` already understands.
+            // (e.g. a synthesized universal-clipboard chord) carry the modifier
+            // state without a modifier key event and their character is typed as
+            // plain text instead of acting as a shortcut. Forward winit's real
+            // modifier state as the encoded key events `i-slint-core` already
+            // understands.
             #[cfg(target_os = "linux")]
             WindowEvent::ModifiersChanged(modifiers) => {
                 let state = modifiers.state();

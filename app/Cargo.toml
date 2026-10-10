@@ -89,6 +89,13 @@ windows = { version = "0.62", features = [
 ] }
 
 
+[target.'cfg(target_os = "linux")'.dependencies]
+# Bind an idle inhibitor (`zwp_idle_inhibit_v1`) onto winit's Wayland connection
+# for compositors that ignore the D-Bus inhibitors `keepawake` relies on.
+wayland-backend = { version = "0.3.15", features = ["client_system"] }
+wayland-client = "0.31.14"
+wayland-protocols = { version = "0.32.13", features = ["client", "unstable"] }
+
 [build-dependencies]
 slint-build.workspace = true
 serde_json.workspace = true
