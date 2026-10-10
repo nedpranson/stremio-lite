@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = [
+    "enginefs",
+    "server",
+    "bindings/async-rar",
+    "bindings/libtorrent-sys",
+    "bindings/async-sevenz",
+    "stremio-runtime-stub",
+    "updater-helper",
+    "settings-gui",
+]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

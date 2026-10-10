@@ -10,7 +10,11 @@ members = [
     "server-connector",
     "stream-ranking",
 ]
-exclude = ["vendor/i-slint-renderer-skia", "vendor/i-slint-core"]
+exclude = [
+    "vendor/i-slint-renderer-skia",
+    "vendor/i-slint-core",
+    "vendor/i-slint-backend-winit",
+]
 
 [workspace.package]
 authors = ["perpetus <perpetus.github@gmail.com>"]
@@ -70,6 +74,14 @@ minidump-writer = "0.13.0"
 minidumper = "0.11.0"
 turso = { version = "0.7.2", default-features = false }
 
+[patch."https://github.com/stremio-native/stream-server.git"]
+# The system libtorrent-rasterbar on Linux distros (e.g. Arch) is a shared
+# library that hides libtorrent's internal aux_ symbols. The upstream
+# libtorrent-sys wrapper called lt::aux::from_hex, which is not exported, so
+# linking failed. This vendored copy replaces it with a self-contained hex
+# parser. See vendor/stream-server/bindings/libtorrent-sys/cpp/wrapper.cpp.
+server = { path = "vendor/stream-server/server" }
+
 [patch.crates-io]
 # Slint 1.17 asks glutin for OpenGL without a version, which glutin maps to
 # exactly 3.3. Keep Slint's public unversioned policy while negotiating the
@@ -81,6 +93,13 @@ i-slint-renderer-skia = { path = "vendor/i-slint-renderer-skia" }
 # only Slint's incremental physics animations survive virtualized scrolling.
 # See vendor/i-slint-core/PATCHES.md.
 i-slint-core = { path = "vendor/i-slint-core" }
+# Slint's winit backend ignores winit's ModifiersChanged event, so modifiers
+# only ever change on physical modifier key events. Chords injected at the
+# compositor level (Hyprland's send_key_state, used by Omarchy's universal
+# clipboard binds) carry the modifiers without a modifier key event, so a
+# pasted Ctrl+V arrived with no Control held and was typed as literal text.
+# Forward the real modifier state. See vendor/i-slint-backend-winit/PATCHES.md.
+i-slint-backend-winit = { path = "vendor/i-slint-backend-winit" }
 
 [profile.release]
 opt-level = 3

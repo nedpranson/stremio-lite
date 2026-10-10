@@ -658,7 +658,6 @@ dependencies = [
 [[package]]
 name = "async-rar"
 version = "0.1.8"
-source = "git+https://github.com/stremio-native/stream-server.git?rev=f585ab6eda9b1411034548c131bb0dc30c6f5f9e#f585ab6eda9b1411034548c131bb0dc30c6f5f9e"
 dependencies = [
  "autocxx",
  "autocxx-build",
@@ -683,7 +682,6 @@ dependencies = [
 [[package]]
 name = "async-sevenz"
 version = "0.1.8"
-source = "git+https://github.com/stremio-native/stream-server.git?rev=f585ab6eda9b1411034548c131bb0dc30c6f5f9e#f585ab6eda9b1411034548c131bb0dc30c6f5f9e"
 dependencies = [
  "autocxx",
  "autocxx-build",
@@ -2981,7 +2979,6 @@ checksum = "66b7e2430c6dff6a955451e2cfc438f09cea1965a9d6f87f7e3b90decc014099"
 [[package]]
 name = "enginefs"
 version = "0.1.8"
-source = "git+https://github.com/stremio-native/stream-server.git?rev=f585ab6eda9b1411034548c131bb0dc30c6f5f9e#f585ab6eda9b1411034548c131bb0dc30c6f5f9e"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4556,8 +4553,6 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-winit"
 version = "1.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a27c7e8f53418d3017362465367b6612b6e439a68097d627d1b91c94b885f0a6"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -5715,7 +5710,6 @@ dependencies = [
 [[package]]
 name = "libtorrent-sys"
 version = "0.1.8"
-source = "git+https://github.com/stremio-native/stream-server.git?rev=f585ab6eda9b1411034548c131bb0dc30c6f5f9e#f585ab6eda9b1411034548c131bb0dc30c6f5f9e"
 dependencies = [
  "cxx",
  "cxx-build",
@@ -9350,7 +9344,6 @@ dependencies = [
 [[package]]
 name = "server"
 version = "0.1.8"
-source = "git+https://github.com/stremio-native/stream-server.git?rev=f585ab6eda9b1411034548c131bb0dc30c6f5f9e#f585ab6eda9b1411034548c131bb0dc30c6f5f9e"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -9436,7 +9429,6 @@ dependencies = [
 [[package]]
 name = "settings-gui"
 version = "0.1.8"
-source = "git+https://github.com/stremio-native/stream-server.git?rev=f585ab6eda9b1411034548c131bb0dc30c6f5f9e#f585ab6eda9b1411034548c131bb0dc30c6f5f9e"
 dependencies = [
  "anyhow",
  "async-trait",
