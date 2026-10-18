@@ -16,10 +16,8 @@
 /trace-*.json
 *.log
 
-# Local agent, editor, and automation metadata
-/.agents/
+# Local editor, and automation metadata
 /docs/
-/skills-lock.json
 /.idea/
 /.vscode/
 *.swp
