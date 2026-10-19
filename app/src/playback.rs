@@ -49,6 +49,8 @@ pub struct StreamSelectionView {
     pub progress: f32,
     pub score: i32,
     pub score_reasons: Vec<String>,
+    /// Locale flags for the detected languages, e.g. `🇮🇹|🇷🇺|🌐`.
+    pub flags: String,
     pub filtered: bool,
 }
 
@@ -223,7 +225,9 @@ impl PlaybackSelections {
                 views.push(StreamSelectionView {
                     id: id.clone(),
                     name: name.clone(),
-                    description: formatted_description.clone(),
+                    // stremio-web renders the addon-provided description
+                    // verbatim (seeders, size, flags and all), so do the same.
+                    description: description.clone(),
                     thumbnail: stream.thumbnail.clone(),
                     progress: stream
                         .behavior_hints
@@ -245,6 +249,7 @@ impl PlaybackSelections {
                         }),
                     score: 0,
                     score_reasons: Vec::new(),
+                    flags: stream_ranking::stream_flags(&name, &description),
                     filtered: false,
                 });
                 rank_inputs.push(stream_ranking::RankInput {

@@ -344,20 +344,7 @@ pub fn parse_stream(input: &RankInput) -> ParsedStream {
     .into_iter()
     .find(|marker| upper.contains(marker))
     .map(ToOwned::to_owned);
-    let languages = [
-        ("ENGLISH", "English"),
-        ("HINDI", "Hindi"),
-        ("PORTUGUESE", "Portuguese"),
-        ("ARABIC", "Arabic"),
-        ("SPANISH", "Spanish"),
-        ("FRENCH", "French"),
-        ("JAPANESE", "Japanese"),
-        ("MULTI", "Multi"),
-    ]
-    .into_iter()
-    .filter(|(marker, _)| upper.contains(marker))
-    .map(|(_, language)| language.to_owned())
-    .collect();
+    let languages = parse_languages(&combined);
     let release_group = combined
         .split_whitespace()
         .rev()
@@ -388,6 +375,96 @@ pub fn parse_stream(input: &RankInput) -> ParsedStream {
         release_group,
         suspicious,
     }
+}
+
+/// Display name paired with the uppercased markers that identify it in stream
+/// titles and descriptions. Short ISO-style codes are matched as whole words
+/// so `ENG` cannot fire inside `ENGINE` or `SPA` inside `SPACE`.
+const LANGUAGE_MARKERS: &[(&str, &[&str])] = &[
+    ("English", &["ENGLISH", "ENG"]),
+    ("Italian", &["ITALIAN", "ITALIANO", "ITA"]),
+    ("Russian", &["RUSSIAN", "RUSSKIY", "RUS"]),
+    ("German", &["GERMAN", "DEUTSCH", "GER"]),
+    ("French", &["FRENCH", "FRANCAIS", "FRA"]),
+    ("Spanish", &["SPANISH", "ESPANOL", "CAST", "SPA"]),
+    ("Portuguese", &["PORTUGUESE", "PORTUGUES", "POR"]),
+    ("Hindi", &["HINDI", "HIN"]),
+    ("Arabic", &["ARABIC", "ARA"]),
+    ("Japanese", &["JAPANESE", "JPN"]),
+    ("Korean", &["KOREAN", "KOR"]),
+    ("Chinese", &["CHINESE", "CHS", "CHT", "MANDARIN"]),
+    ("Turkish", &["TURKISH", "TUR"]),
+    ("Dutch", &["DUTCH", "NLD"]),
+    ("Polish", &["POLISH", "POL"]),
+    ("Swedish", &["SWEDISH", "SWE"]),
+    ("Multi", &["MULTI", "DUAL"]),
+];
+
+pub fn parse_languages(text: &str) -> Vec<String> {
+    let upper = text.to_ascii_uppercase();
+    LANGUAGE_MARKERS
+        .iter()
+        .filter(|(_, markers)| {
+            markers
+                .iter()
+                .any(|marker| contains_ascii_word(&upper, marker))
+        })
+        .map(|(language, _)| (*language).to_owned())
+        .collect()
+}
+
+/// Collects flag emoji already embedded in addon-provided text (e.g.
+/// `🇮🇹🇷🇺`), in order of appearance. A flag is a pair of regional indicator
+/// symbols; incomplete pairs are ignored. This mirrors stremio-web, which has
+/// no flag mapping of its own and simply renders whatever the addon sends.
+pub fn extract_flags(text: &str) -> Vec<String> {
+    let is_regional_indicator =
+        |c: char| ('\u{1F1E6}'..='\u{1F1FF}').contains(&c);
+
+    let mut flags = Vec::new();
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        if !is_regional_indicator(c) {
+            continue;
+        }
+        if chars.peek().copied().is_some_and(is_regional_indicator) {
+            let second = chars.next().expect("peeked regional indicator");
+            let flag: String = [c, second].into_iter().collect();
+            if !flags.contains(&flag) {
+                flags.push(flag);
+            }
+        }
+    }
+    flags
+}
+
+/// Flags shown for a stream, joined with `|`. Only flags the addon actually
+/// includes are used (description first, then name); no language-to-flag
+/// guessing, matching stremio-web's raw rendering.
+pub fn stream_flags(name: &str, description: &str) -> String {
+    let mut flags = extract_flags(description);
+    for flag in extract_flags(name) {
+        if !flags.contains(&flag) {
+            flags.push(flag);
+        }
+    }
+    flags.join("|")
+}
+
+fn contains_ascii_word(haystack: &str, needle: &str) -> bool {
+    let mut from = 0;
+    while let Some(offset) = haystack[from..].find(needle) {
+        let start = from + offset;
+        let end = start + needle.len();
+        let boundary_before =
+            start == 0 || !haystack.as_bytes()[start - 1].is_ascii_alphabetic();
+        let boundary_after = end == haystack.len() || !haystack.as_bytes()[end].is_ascii_alphabetic();
+        if boundary_before && boundary_after {
+            return true;
+        }
+        from = end;
+    }
+    false
 }
 
 pub fn parse_size_bytes_from_text(text: &str) -> Option<u64> {
@@ -688,5 +765,28 @@ mod tests {
         assert!(formatted.contains("👤 12"));
         assert!(formatted.contains("💾 1.24 GB"));
         assert_eq!(formatted.lines().count(), 2);
+    }
+
+    #[test]
+    fn detects_languages_as_whole_words_only() {
+        assert_eq!(
+            parse_languages("Movie.2024.1080p.[ITA] Rus.Eng x264"),
+            vec!["English", "Italian", "Russian"]
+        );
+        assert!(parse_languages("ENGINEERING SPACE TURBO SWEET").is_empty());
+        assert!(parse_languages("1080p WEB-DL x264 MULTI").contains(&"Multi".to_owned()));
+    }
+
+    #[test]
+    fn flags_are_taken_verbatim_from_addon_text() {
+        let flags = stream_flags(
+            "MediaFusion 🇮🇹🇷🇺",
+            "🇮🇹 Italian 🇷🇺 Russian 🇬🇧 English\n👤 12 💾 4.20 GB",
+        );
+        assert_eq!(flags, "🇮🇹|🇷🇺|🇬🇧");
+        assert_eq!(stream_flags("Comet", ""), "");
+        assert_eq!(stream_flags("🇩🇪", ""), "🇩🇪");
+        assert_eq!(extract_flags("no flags here 1F1E6"), Vec::<String>::new());
+        assert_eq!(extract_flags("🇮🇹🇮🇹🇷🇺"), vec!["🇮🇹", "🇷🇺"]);
     }
 }

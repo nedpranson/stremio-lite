@@ -9,6 +9,7 @@ export component StreamRow inherits Rectangle {
     in property <string> description;
     in property <string> score-label: "";
     in property <string> score-details: "";
+    in property <string> flags: "";
     in property <bool> filtered: false;
     in property <image> thumbnail;
     in property <bool> has-thumbnail: root.thumbnail.width > 0;
@@ -17,9 +18,15 @@ export component StreamRow inherits Rectangle {
     callback play;
     callback context-requested(length, length);
 
-    height: 5.6 * root.unit;
+    // Mirrors stremio-web's `.stream-container`: 8rem x 5rem artwork, 1rem
+    // gaps, 0.5rem/1rem padding, and the overlay color on hover/focus.
+    // No fixed height: the row grows so the full description is visible.
+    height: content.preferred-height;
+    out property <length> content-height: content.preferred-height;
     border-radius: Theme.border-radius;
-    background: root.selected || area.has-hover ? Theme.overlay-hover : transparent;
+    background: root.selected || area.has-hover ? Theme.overlay-color : transparent;
+
+    animate background { duration: Theme.motion-fast; }
 
     accessible-role: button;
     accessible-label: root.name + " " + root.description + " " + root.score-details;
@@ -35,127 +42,147 @@ export component StreamRow inherits Rectangle {
         }
     }
 
-    HorizontalLayout {
-        padding-left: root.unit;
-        padding-right: root.unit;
-        spacing: root.unit;
-        alignment: center;
+    content := Rectangle {
+        width: parent.width;
+        height: self.preferred-height;
+        background: transparent;
 
-        stream-info := Rectangle {
-            width: 7.5 * root.unit;
-            height: 4.2 * root.unit;
-            border-radius: 0.35 * root.unit;
-            background: Theme.overlay-color;
-            clip: true;
-
-            if (root.has-thumbnail) : FallbackImage {
-                width: parent.width;
-                height: parent.height;
-                source: root.thumbnail;
-                contain: false;
-
-                Image {
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
-                    width: 1.5 * root.unit;
-                    height: 1.5 * root.unit;
-                    source: @image-url("../assets/images/icons/link.svg");
-                    colorize: Theme.text-secondary;
-                    image-fit: contain;
-                }
-            }
-
-            if (!root.has-thumbnail) : Text {
-                x: 0.65 * root.unit;
-                width: parent.width - 1.3 * root.unit;
-                height: parent.height;
-                text: root.name;
-                color: Theme.text-primary;
-                opacity: 0.88;
-                font-size: 0.9 * root.unit;
-                font-weight: 600;
-                overflow: elide;
-                vertical-alignment: center;
-                horizontal-alignment: center;
-            }
-
-            if (root.progress > 0) : Rectangle {
-                y: parent.height - 0.3 * root.unit;
-                width: parent.width;
-                height: 0.3 * root.unit;
-                background: Theme.background.with-alpha(0.7);
-
-                Rectangle {
-                    width: parent.width * root.progress.clamp(0, 1);
-                    height: parent.height;
-                    background: Theme.accent;
-                }
-            }
-        }
-
-        VerticalLayout {
-            horizontal-stretch: 1;
+        HorizontalLayout {
+            padding-left: root.unit;
+            padding-right: root.unit;
+            padding-top: 0.5 * root.unit;
+            padding-bottom: 0.5 * root.unit;
+            spacing: root.unit;
             alignment: center;
-            spacing: 0.2 * root.unit;
 
-            Text {
-                text: root.description;
-                color: Theme.text-primary;
-                opacity: 0.88;
-                font-size: 0.95 * root.unit;
-                wrap: word-wrap;
-                overflow: elide;
+            // Web's `.info-container`: artwork when the addon provided one, the
+            // stream name otherwise, with the progress bar on the bottom edge.
+            info := Rectangle {
+                width: 8 * root.unit;
+                height: 5 * root.unit;
+                background: transparent;
+
+                if (root.has-thumbnail) : FallbackImage {
+                    width: parent.width;
+                    height: parent.height;
+                    source: root.thumbnail;
+                    contain: false;
+                    image-opacity: 0.9;
+                    background-color: Theme.overlay-color;
+
+                    Image {
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        width: 1.5 * root.unit;
+                        height: 1.5 * root.unit;
+                        source: @image-url("../assets/images/icons/link.svg");
+                        colorize: Theme.primary-foreground;
+                        opacity: 0.25;
+                        image-fit: contain;
+                    }
+                }
+
+                if (!root.has-thumbnail) : Text {
+                    width: 7 * root.unit;
+                    height: parent.height;
+                    text: root.name;
+                    color: Theme.primary-foreground;
+                    font-size: 1.1 * root.unit;
+                    wrap: word-wrap;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+
+                if (root.progress > 0) : Rectangle {
+                    y: parent.height - 0.4 * root.unit;
+                    width: parent.width;
+                    height: 0.4 * root.unit;
+                    background: Theme.primary-foreground.with-alpha(0.2);
+
+                    Rectangle {
+                        width: parent.width * root.progress.clamp(0, 1);
+                        height: parent.height;
+                        background: Theme.primary-accent;
+                    }
+                }
             }
-        }
 
-        if (root.score-label != "") : Rectangle {
-            width: 3.75 * root.unit;
-            height: 1.8 * root.unit;
-            border-radius: self.height / 2;
-            background: root.filtered
-                ? Theme.danger.with-alpha(0.22)
-                : Theme.accent.with-alpha(0.2);
+            // Web's `.description-container`: a column that shows every line the
+            // addon sent; Nova's flags line sits below it.
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 0.2 * root.unit;
+                // Keep the score pill from covering the description text.
+                padding-right: root.score-label != "" ? 4 * root.unit : 0px;
 
-            Text {
-                width: parent.width;
-                height: parent.height;
-                text: root.score-label;
-                color: root.filtered ? Theme.danger : Theme.accent;
-                font-size: 0.78 * root.unit;
-                font-weight: 650;
-                horizontal-alignment: center;
-                vertical-alignment: center;
+                Text {
+                    text: root.description;
+                    color: Theme.primary-foreground;
+                    font-size: root.unit;
+                    wrap: word-wrap;
+                    vertical-alignment: center;
+                }
+
+                if (root.flags != "") : Text {
+                    text: root.flags;
+                    color: Theme.primary-foreground;
+                    opacity: 0.6;
+                    font-size: 0.8 * root.unit;
+                    vertical-alignment: center;
+                }
             }
 
-            TouchArea {
-                mouse-cursor: help;
-                accessible-role: text;
-                accessible-label: root.score-details;
-            }
-        }
-
-        if (root.selected || area.has-hover) : Rectangle {
-            width: 3 * root.unit;
-            height: parent.height;
-            background: transparent;
-
-            play-button := Rectangle {
-                y: (parent.height - self.height) / 2;
+            // Web's `.icon`: a 3rem circle in the secondary accent that fades in
+            // on hover/focus/selection.
+            icon := Rectangle {
                 width: 3 * root.unit;
                 height: 3 * root.unit;
                 border-radius: self.width / 2;
-                background: Theme.success;
+                background: Theme.secondary-accent;
+                opacity: root.selected || area.has-hover ? 1 : 0;
+
+                animate opacity { duration: Theme.motion-fast; }
 
                 Image {
                     x: (parent.width - self.width) / 2;
                     y: (parent.height - self.height) / 2;
-                    width: 1.4 * root.unit;
-                    height: 1.4 * root.unit;
+                    width: 1.6 * root.unit;
+                    height: 1.6 * root.unit;
                     source: @image-url("../assets/images/icons/play.svg");
-                    colorize: Theme.text-primary;
+                    colorize: Theme.primary-foreground;
                     image-fit: contain;
                 }
             }
+        }
+    }
+
+    // Nova's score pill is overlaid so it does not alter the web flex metrics.
+    if (root.score-label != "") : Rectangle {
+        x: root.width - root.unit - 3 * root.unit - root.unit - 3.75 * root.unit;
+        y: (root.height - self.height) / 2;
+        width: 3.75 * root.unit;
+        height: 1.8 * root.unit;
+        border-radius: self.height / 2;
+        background: root.filtered
+        ? Theme.danger.with-alpha(0.22)
+        : Theme.accent.with-alpha(0.2);
+
+        Text {
+            width: parent.width;
+            height: parent.height;
+            text: root.score-label;
+            color: root.filtered ? Theme.danger : Theme.accent;
+            font-size: 0.78 * root.unit;
+            font-weight: 650;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        TouchArea {
+            mouse-cursor: help;
+            accessible-role: text;
+            accessible-label: root.score-details;
         }
     }
 }
@@ -218,8 +245,8 @@ export component EpisodeRow inherits Rectangle {
         border-width: 0.15 * root.unit;
         border-color: root.selection-highlight ? Theme.primary-accent : transparent;
         background: self.has-hover || self.has-focus || root.selected-row
-            ? Theme.overlay-color
-            : transparent;
+        ? Theme.overlay-color
+        : transparent;
         accessible-name: @tr("EPISODE" => "Episode") + " " + root.episode-number + " " + root.title;
         long-press-enabled: true;
         clicked => { root.selected(); }
@@ -289,7 +316,7 @@ export component EpisodeRow inherits Rectangle {
                 width: parent.width;
                 height: 2.4 * root.unit;
                 text: (root.episode-number > 0 ? root.episode-number + ". " : "")
-                    + root.title;
+                + root.title;
                 color: Theme.primary-foreground;
                 font-size: root.unit;
                 font-weight: 500;
@@ -315,8 +342,8 @@ export component EpisodeRow inherits Rectangle {
                 x: parent.width - self.width;
                 y: 3.2 * root.unit;
                 width: (root.upcoming && !root.watched ? 6.5 * root.unit : 0px)
-                    + (root.watched ? 7.5 * root.unit : 0px)
-                    + (root.upcoming && root.watched ? 0.5 * root.unit : 0px);
+                + (root.watched ? 7.5 * root.unit : 0px)
+                + (root.upcoming && root.watched ? 0.5 * root.unit : 0px);
                 height: 1.6 * root.unit;
                 background: transparent;
 
@@ -384,8 +411,8 @@ export component EpisodeRow inherits Rectangle {
             height: 3 * root.unit;
             border-radius: self.width / 2;
             background: self.has-hover || self.has-focus
-                ? Theme.secondary-accent
-                : Theme.overlay-color;
+            ? Theme.secondary-accent
+            : Theme.overlay-color;
             accessible-name: @tr("CTX_WATCH" => "Watch");
             clicked => { root.play(); }
 
@@ -421,14 +448,14 @@ export component EpisodeRow inherits Rectangle {
             }
             MenuItem {
                 title: root.watched
-                    ? @tr("CTX_MARK_NON_WATCHED" => "Mark as unwatched")
-                    : @tr("CTX_MARK_WATCHED" => "Mark as watched");
+                ? @tr("CTX_MARK_NON_WATCHED" => "Mark as unwatched")
+                : @tr("CTX_MARK_WATCHED" => "Mark as watched");
                 activated => { root.toggle-watched(); }
             }
             MenuItem {
                 title: root.season-watched
-                    ? @tr("CTX_UNMARK_REST" => "Mark rest as unwatched")
-                    : @tr("CTX_MARK_REST" => "Mark rest as watched");
+                ? @tr("CTX_UNMARK_REST" => "Mark rest as unwatched")
+                : @tr("CTX_MARK_REST" => "Mark rest as watched");
                 activated => { root.toggle-season-watched(); }
             }
         }

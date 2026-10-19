@@ -22,6 +22,7 @@ export struct StreamLink {
     score: int,
     score-reasons: [string],
     score-summary: string,
+    flags: string,
     filtered: bool,
 }
 
@@ -580,23 +581,23 @@ export component DetailsPage inherits Rectangle {
                         root.active-stream-provider == "All"
                             || stream.provider == root.active-stream-provider;
                     width: parent.width;
-                    // The additional 0.1rem preserves the web row gap while
-                    // allowing ListView to virtualize off-screen streams.
-                    height: self.matches-provider ? 5.8 * root.unit : 0px;
+                    // The card grows with its full description; the extra
+                    // 0.5rem keeps the web's row gap.
+                    height: self.matches-provider ? stream-row.content-height + 0.5 * root.unit : 0px;
                     clip: true;
                     background: transparent;
 
-                    StreamRow {
+                    stream-row := StreamRow {
                         visible: stream-delegate.matches-provider;
                         x: 0px;
                         y: 0px;
                         width: parent.width;
-                        height: 5.6 * root.unit;
                         unit: root.unit;
                         name: stream.name;
                         description: stream.description;
                         score-label: root.ranking-mode == "Original" ? "" : (stream.score >= 0 ? "+" + stream.score : "" + stream.score);
                         score-details: stream.score-summary;
+                        flags: stream.flags;
                         filtered: stream.filtered;
                         thumbnail: stream.thumbnail;
                         progress: stream.progress;

@@ -64,6 +64,7 @@ pub(crate) fn project_stream_selection_views(
                         .collect::<Vec<slint::SharedString>>(),
                 )),
                 score_summary: score_summary.into(),
+                flags: link.flags.into(),
                 filtered: link.filtered,
             }
         })
