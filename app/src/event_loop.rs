@@ -45,7 +45,7 @@ pub(crate) fn project_stream_selection_views(
             let score_summary = link.score_reasons.join(", ");
             StreamLink {
                 id: link.id.into(),
-                name: link.name.into(),
+                title: link.title.into(),
                 description: link.description.into(),
                 provider: link.provider.into(),
                 thumbnail: link
@@ -64,7 +64,6 @@ pub(crate) fn project_stream_selection_views(
                         .collect::<Vec<slint::SharedString>>(),
                 )),
                 score_summary: score_summary.into(),
-                flags: link.flags.into(),
                 filtered: link.filtered,
             }
         })
@@ -617,7 +616,7 @@ pub fn start_event_loop(
                         let mut fingerprint = models::Fingerprint::new();
                         for stream in &stream_selection_views {
                             fingerprint.str(&stream.id);
-                            fingerprint.str(&stream.name);
+                            fingerprint.str(&stream.title);
                             fingerprint.str(&stream.description);
                             fingerprint.str(&stream.provider);
                             fingerprint.optional_str(stream.thumbnail.as_deref());

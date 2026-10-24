@@ -1917,10 +1917,10 @@ export component PlayerPage inherits Rectangle {
                 for stream in available-streams : TrackItem {
                     width: streams-menu.width - 24px;
                     x: 12px;
-                    label: stream.name;
+                    label: stream.title;
                     secondary-label: stream.provider
                         + (stream.description == "" ? "" : " · " + stream.description);
-                    active: stream-name == stream.name || stream-name == stream.description;
+                    active: stream-name == stream.title || stream-name == stream.description;
                     clicked => {
                         root.close-options-hierarchy();
                         root.switch-stream(stream.id);

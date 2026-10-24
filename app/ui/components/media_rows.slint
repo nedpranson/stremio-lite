@@ -5,12 +5,8 @@ import { SkeletonBlock } from "feedback.slint";
 
 export component StreamRow inherits Rectangle {
     in property <length> unit: 16px;
-    in property <string> name;
+    in property <string> title;
     in property <string> description;
-    in property <string> score-label: "";
-    in property <string> score-details: "";
-    in property <string> flags: "";
-    in property <bool> filtered: false;
     in property <image> thumbnail;
     in property <bool> has-thumbnail: root.thumbnail.width > 0;
     in property <float> progress: 0;
@@ -29,7 +25,7 @@ export component StreamRow inherits Rectangle {
     animate background { duration: Theme.motion-fast; }
 
     accessible-role: button;
-    accessible-label: root.name + " " + root.description + " " + root.score-details;
+    accessible-label: root.title + " " + root.description;
     accessible-action-default => { root.play(); }
 
     area := TouchArea {
@@ -85,11 +81,11 @@ export component StreamRow inherits Rectangle {
                 if (!root.has-thumbnail) : Text {
                     width: 7 * root.unit;
                     height: parent.height;
-                    text: root.name;
+                    text: root.title;
                     color: Theme.primary-foreground;
                     font-size: 1.1 * root.unit;
-                    wrap: word-wrap;
-                    overflow: elide;
+                    wrap: no-wrap;
+                    overflow: clip;
                     vertical-alignment: center;
                 }
 
@@ -108,27 +104,18 @@ export component StreamRow inherits Rectangle {
             }
 
             // Web's `.description-container`: a column that shows every line the
-            // addon sent; Nova's flags line sits below it.
+            // addon sent.
             VerticalLayout {
                 horizontal-stretch: 1;
                 alignment: center;
                 spacing: 0.2 * root.unit;
-                // Keep the score pill from covering the description text.
-                padding-right: root.score-label != "" ? 4 * root.unit : 0px;
 
                 Text {
                     text: root.description;
                     color: Theme.primary-foreground;
-                    font-size: root.unit;
-                    wrap: word-wrap;
-                    vertical-alignment: center;
-                }
-
-                if (root.flags != "") : Text {
-                    text: root.flags;
-                    color: Theme.primary-foreground;
-                    opacity: 0.6;
-                    font-size: 0.8 * root.unit;
+                    font-size: 12.5px;
+                    wrap: no-wrap;
+                    overflow: clip;
                     vertical-alignment: center;
                 }
             }
@@ -157,34 +144,6 @@ export component StreamRow inherits Rectangle {
         }
     }
 
-    // Nova's score pill is overlaid so it does not alter the web flex metrics.
-    if (root.score-label != "") : Rectangle {
-        x: root.width - root.unit - 3 * root.unit - root.unit - 3.75 * root.unit;
-        y: (root.height - self.height) / 2;
-        width: 3.75 * root.unit;
-        height: 1.8 * root.unit;
-        border-radius: self.height / 2;
-        background: root.filtered
-        ? Theme.danger.with-alpha(0.22)
-        : Theme.accent.with-alpha(0.2);
-
-        Text {
-            width: parent.width;
-            height: parent.height;
-            text: root.score-label;
-            color: root.filtered ? Theme.danger : Theme.accent;
-            font-size: 0.78 * root.unit;
-            font-weight: 650;
-            horizontal-alignment: center;
-            vertical-alignment: center;
-        }
-
-        TouchArea {
-            mouse-cursor: help;
-            accessible-role: text;
-            accessible-label: root.score-details;
-        }
-    }
 }
 
 export component EpisodeRow inherits Rectangle {

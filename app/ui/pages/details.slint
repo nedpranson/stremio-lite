@@ -13,7 +13,7 @@ import { SharePrompt } from "../components/share_prompt.slint";
 
 export struct StreamLink {
     id: string,
-    name: string,
+    title: string,
     description: string,
     provider: string,
     thumbnail-url: string,
@@ -22,7 +22,6 @@ export struct StreamLink {
     score: int,
     score-reasons: [string],
     score-summary: string,
-    flags: string,
     filtered: bool,
 }
 
@@ -593,12 +592,8 @@ export component DetailsPage inherits Rectangle {
                         y: 0px;
                         width: parent.width;
                         unit: root.unit;
-                        name: stream.name;
+                        title: stream.title;
                         description: stream.description;
-                        score-label: root.ranking-mode == "Original" ? "" : (stream.score >= 0 ? "+" + stream.score : "" + stream.score);
-                        score-details: stream.score-summary;
-                        flags: stream.flags;
-                        filtered: stream.filtered;
                         thumbnail: stream.thumbnail;
                         progress: stream.progress;
                         play => { root.play-stream(stream.id); }

@@ -413,52 +413,14 @@ pub fn parse_languages(text: &str) -> Vec<String> {
         .collect()
 }
 
-/// Collects flag emoji already embedded in addon-provided text (e.g.
-/// `🇮🇹🇷🇺`), in order of appearance. A flag is a pair of regional indicator
-/// symbols; incomplete pairs are ignored. This mirrors stremio-web, which has
-/// no flag mapping of its own and simply renders whatever the addon sends.
-pub fn extract_flags(text: &str) -> Vec<String> {
-    let is_regional_indicator =
-        |c: char| ('\u{1F1E6}'..='\u{1F1FF}').contains(&c);
-
-    let mut flags = Vec::new();
-    let mut chars = text.chars().peekable();
-    while let Some(c) = chars.next() {
-        if !is_regional_indicator(c) {
-            continue;
-        }
-        if chars.peek().copied().is_some_and(is_regional_indicator) {
-            let second = chars.next().expect("peeked regional indicator");
-            let flag: String = [c, second].into_iter().collect();
-            if !flags.contains(&flag) {
-                flags.push(flag);
-            }
-        }
-    }
-    flags
-}
-
-/// Flags shown for a stream, joined with `|`. Only flags the addon actually
-/// includes are used (description first, then name); no language-to-flag
-/// guessing, matching stremio-web's raw rendering.
-pub fn stream_flags(name: &str, description: &str) -> String {
-    let mut flags = extract_flags(description);
-    for flag in extract_flags(name) {
-        if !flags.contains(&flag) {
-            flags.push(flag);
-        }
-    }
-    flags.join("|")
-}
-
 fn contains_ascii_word(haystack: &str, needle: &str) -> bool {
     let mut from = 0;
     while let Some(offset) = haystack[from..].find(needle) {
         let start = from + offset;
         let end = start + needle.len();
-        let boundary_before =
-            start == 0 || !haystack.as_bytes()[start - 1].is_ascii_alphabetic();
-        let boundary_after = end == haystack.len() || !haystack.as_bytes()[end].is_ascii_alphabetic();
+        let boundary_before = start == 0 || !haystack.as_bytes()[start - 1].is_ascii_alphabetic();
+        let boundary_after =
+            end == haystack.len() || !haystack.as_bytes()[end].is_ascii_alphabetic();
         if boundary_before && boundary_after {
             return true;
         }
@@ -574,15 +536,24 @@ pub fn parse_seeders_from_text(text: &str) -> Option<u32> {
 }
 
 pub fn format_size(bytes: u64) -> String {
-    let gib = bytes as f64 / 1_073_741_824.0;
-    if gib >= 1.0 {
-        format!("{:.2} GB", gib)
+    const KIB: u64 = 1024;
+    const MIB: u64 = 1024 * 1024;
+    const GIB: u64 = 1024 * 1024 * 1024;
+
+    if bytes >= GIB {
+        let whole = bytes / GIB;
+        let frac = (bytes % GIB) * 100 / GIB;
+        format!("{whole}.{frac:02} GB")
+    } else if bytes >= MIB {
+        let whole = bytes / MIB;
+        let frac = (bytes % MIB) * 10 / MIB;
+        format!("{whole}.{frac} MB")
+    } else if bytes >= KIB {
+        format!("{} KB", bytes / KIB)
     } else {
-        let mib = bytes as f64 / 1_048_576.0;
-        format!("{:.1} MB", mib)
+        format!("{bytes} B")
     }
 }
-
 pub fn format_stream_description(
     name: &str,
     description: &str,
@@ -599,7 +570,7 @@ pub fn format_stream_description(
     let raw_lines: Vec<&str> = description
         .lines()
         .map(str::trim)
-        .filter(|l| !l.is_empty())
+        .filter(|line| !line.is_empty())
         .collect();
 
     if raw_lines.is_empty() {
@@ -607,16 +578,16 @@ pub fn format_stream_description(
         if let Some(s) = seeders {
             stats.push(format!("👤 {s}"));
         }
-        if let Some(sz) = size_bytes {
-            stats.push(format!("💾 {}", format_size(sz)));
+        if let Some(size) = size_bytes {
+            stats.push(format!("💾 {}", format_size(size)));
         }
         return stats.join(" ");
     }
 
     let mut title_lines = Vec::new();
     let mut meta_lines = Vec::new();
-
     for line in &raw_lines {
+        let upper = line.to_ascii_uppercase();
         let is_meta = line.contains('👤')
             || line.contains('💾')
             || line.contains('⚙')
@@ -624,23 +595,22 @@ pub fn format_stream_description(
             || line.contains('🗓')
             || line.contains('📺')
             || line.contains('⚡')
-            || line.to_ascii_uppercase().contains("SEEDERS")
-            || line.to_ascii_uppercase().contains("SEEDS");
+            || upper.contains("SEEDERS")
+            || upper.contains("SEEDS");
         if is_meta {
-            meta_lines.push((*line).to_string());
+            meta_lines.push((*line).to_owned());
         } else {
-            title_lines.push((*line).to_string());
+            title_lines.push((*line).to_owned());
         }
     }
 
-    let title = if title_lines.is_empty() {
-        raw_lines[0].to_string()
-    } else {
-        title_lines[0].clone()
-    };
-
+    let title = title_lines
+        .first()
+        .cloned()
+        .unwrap_or_else(|| raw_lines[0].to_owned());
     let mut meta_line = meta_lines.join(" ");
     let meta_upper = meta_line.to_ascii_uppercase();
+
     if let Some(s) = seeders
         && !meta_line.contains('👤')
         && !meta_upper.contains("SEED")
@@ -650,7 +620,7 @@ pub fn format_stream_description(
         }
         meta_line.push_str(&format!("👤 {s}"));
     }
-    if let Some(sz) = size_bytes
+    if let Some(size) = size_bytes
         && !meta_line.contains('💾')
         && !meta_upper.contains("GB")
         && !meta_upper.contains("MB")
@@ -660,7 +630,7 @@ pub fn format_stream_description(
         if !meta_line.is_empty() {
             meta_line.push(' ');
         }
-        meta_line.push_str(&format!("💾 {}", format_size(sz)));
+        meta_line.push_str(&format!("💾 {}", format_size(size)));
     }
 
     if meta_line.is_empty() {
@@ -775,18 +745,5 @@ mod tests {
         );
         assert!(parse_languages("ENGINEERING SPACE TURBO SWEET").is_empty());
         assert!(parse_languages("1080p WEB-DL x264 MULTI").contains(&"Multi".to_owned()));
-    }
-
-    #[test]
-    fn flags_are_taken_verbatim_from_addon_text() {
-        let flags = stream_flags(
-            "MediaFusion 🇮🇹🇷🇺",
-            "🇮🇹 Italian 🇷🇺 Russian 🇬🇧 English\n👤 12 💾 4.20 GB",
-        );
-        assert_eq!(flags, "🇮🇹|🇷🇺|🇬🇧");
-        assert_eq!(stream_flags("Comet", ""), "");
-        assert_eq!(stream_flags("🇩🇪", ""), "🇩🇪");
-        assert_eq!(extract_flags("no flags here 1F1E6"), Vec::<String>::new());
-        assert_eq!(extract_flags("🇮🇹🇮🇹🇷🇺"), vec!["🇮🇹", "🇷🇺"]);
     }
 }
