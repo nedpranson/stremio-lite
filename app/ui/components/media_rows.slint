@@ -83,9 +83,9 @@ export component StreamRow inherits Rectangle {
                     height: parent.height;
                     text: root.title;
                     color: Theme.primary-foreground;
-                    font-size: 1.1 * root.unit;
-                    wrap: no-wrap;
-                    overflow: clip;
+                    font-size: 12.5px;
+                    wrap: word-wrap;
+                    overflow: elide;
                     vertical-alignment: center;
                 }
 
