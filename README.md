@@ -1,4 +1,4 @@
-# Stremio Nova
+# Stremio Lite
 
 A fast, lightweight desktop client for Stremio — built in Rust with a native [Slint](https://slint.dev/) UI.
 
@@ -18,7 +18,7 @@ sudo apt-get install build-essential clang cmake pkg-config libssl-dev libclang-
 Then:
 
 ```bash
-cargo run --release --package stremio-native
+cargo run --release --package stremio-lite
 ```
 
 ### Windows
@@ -38,7 +38,7 @@ Install native dependencies once:
 Then:
 
 ```powershell
-cargo run --release --package stremio-native
+cargo run --release --package stremio-lite
 ```
 
 Settings, logs, and image caches are stored in `./storage/`.

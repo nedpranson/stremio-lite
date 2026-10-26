@@ -30,9 +30,9 @@ use souvlaki::{
 
 use crate::MainWindow;
 
-const DISPLAY_NAME: &str = "Stremio Native";
-const DBUS_NAME: &str = "stremio_native";
-const WAKE_REVERSE_DOMAIN: &str = "com.stremio.native";
+const DISPLAY_NAME: &str = "Stremio Lite";
+const DBUS_NAME: &str = "stremio_lite";
+const WAKE_REVERSE_DOMAIN: &str = "com.stremio.lite";
 
 /// Handler invoked for every media-key / OS-control event. Runs on the media
 /// backend's own thread, so it must be `Send`.
@@ -331,7 +331,7 @@ impl Worker {
             };
             let result = controls.set_metadata(MediaMetadata {
                 title: Some(title),
-                artist: Some("Stremio"),
+                artist: Some("Stremio Lite"),
                 cover_url,
                 duration: duration_opt,
                 ..MediaMetadata::default()
@@ -341,7 +341,7 @@ impl Worker {
                 if cover_url.is_some() {
                     let fallback_result = controls.set_metadata(MediaMetadata {
                         title: Some(title),
-                        artist: Some("Stremio"),
+                        artist: Some("Stremio Lite"),
                         cover_url: None,
                         duration: duration_opt,
                         ..MediaMetadata::default()

@@ -33,15 +33,15 @@ impl ProfileMode {
         match self {
             Self::Off => false,
             Self::Full => true,
-            Self::Ui => target == "stremio_native" || target.starts_with("stremio_native::"),
+            Self::Ui => target == "stremio_lite" || target.starts_with("stremio_lite::"),
             Self::Io => {
-                target == "stremio_native"
-                    || target.starts_with("stremio_native::image_cache")
-                    || target.starts_with("stremio_native::db")
+                target == "stremio_lite"
+                    || target.starts_with("stremio_lite::image_cache")
+                    || target.starts_with("stremio_lite::db")
                     || target.starts_with("core_env")
             }
             Self::Playback => {
-                target.starts_with("stremio_native::mpv_integration")
+                target.starts_with("stremio_lite::mpv_integration")
                     || target.starts_with("playback_mpv")
             }
         }
@@ -186,7 +186,7 @@ pub fn spawn_reporter() -> Option<tokio::task::JoinHandle<()>> {
                 interval.tick().await;
                 let snapshot = counters().snapshot();
                 tracing::info!(
-                    target: "stremio_native::performance",
+                    target: "stremio_lite::performance",
                     ui_patches = snapshot.ui_patches,
                     ui_patch_ms = snapshot.ui_patch_micros / 1_000,
                     image_memory_hits = snapshot.image_memory_hits,
@@ -208,15 +208,14 @@ mod tests {
 
     #[test]
     fn legacy_profile_flag_enables_full_profile() {
-        let config =
-            ProfileConfig::from_args(["stremio-native".to_owned(), "--profile".to_owned()]);
+        let config = ProfileConfig::from_args(["stremio-lite".to_owned(), "--profile".to_owned()]);
         assert_eq!(config.mode, ProfileMode::Full);
     }
 
     #[test]
     fn profile_output_is_parsed_without_enabling_an_unrequested_mode() {
         let config = ProfileConfig::from_args([
-            "stremio-native".to_owned(),
+            "stremio-lite".to_owned(),
             "--profile-output=trace.json".to_owned(),
         ]);
         assert_eq!(config.mode, ProfileMode::Off);

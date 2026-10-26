@@ -5,6 +5,8 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 
+const APP_DIR_NAME: &str = "stremio-lite";
+
 static APP_PATHS: OnceLock<AppPaths> = OnceLock::new();
 
 #[derive(Clone, Debug)]
@@ -42,7 +44,7 @@ impl AppPaths {
         let platform_root = dirs::data_local_dir().ok_or_else(|| {
             anyhow!("the operating system did not provide a local application-data directory")
         })?;
-        Ok(Self::from_root(platform_root.join("stremio-native")))
+        Ok(Self::from_root(platform_root.join(APP_DIR_NAME)))
     }
 
     fn create_directories(&self) -> Result<()> {
@@ -129,22 +131,22 @@ pub(crate) fn get() -> &'static AppPaths {
 
 #[cfg(test)]
 mod tests {
-    use super::AppPaths;
+    use super::{APP_DIR_NAME, AppPaths};
     use std::path::PathBuf;
 
     #[test]
-    fn resolver_uses_stremio_native_suffix() {
-        let paths = AppPaths::resolve().expect("platform data directory should resolve");
+    fn resolver_uses_stremio_lite_suffix() {
+        let paths = AppPaths::from_root(PathBuf::from("platform-data").join(APP_DIR_NAME));
 
         assert_eq!(
             paths.root().file_name().and_then(|name| name.to_str()),
-            Some("stremio-native")
+            Some(APP_DIR_NAME)
         );
     }
 
     #[test]
     fn every_derived_path_stays_below_root() {
-        let paths = AppPaths::from_root(PathBuf::from("platform-data").join("stremio-native"));
+        let paths = AppPaths::from_root(PathBuf::from("platform-data").join(APP_DIR_NAME));
         let derived = [
             paths.database(),
             paths.logs(),

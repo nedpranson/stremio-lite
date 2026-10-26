@@ -251,7 +251,7 @@ static DB_CONNECTION_INIT: AsyncMutex<()> = AsyncMutex::const_new(());
 static CREDENTIAL_STORE: OnceLock<Arc<dyn credential_store::CredentialStore>> = OnceLock::new();
 static ACTIVE_PROFILE_ID: LazyLock<RwLock<String>> =
     LazyLock::new(|| RwLock::new("default".to_owned()));
-const AUTH_VAULT_SENTINEL: &str = "__STREMIO_NATIVE_OS_VAULT__";
+const AUTH_VAULT_SENTINEL: &str = "__STREMIO_LITE_OS_VAULT__";
 
 pub fn install_credential_store(store: Arc<dyn credential_store::CredentialStore>) {
     let _ = CREDENTIAL_STORE.set(store);

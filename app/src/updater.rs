@@ -17,10 +17,10 @@ use tokio::task::JoinHandle;
 
 use crate::{MainWindow, tray};
 
-const REPOSITORY_OWNER: &str = "perpetus";
-const REPOSITORY_NAME: &str = "stremio-native";
+const REPOSITORY_OWNER: &str = "nedpranson";
+const REPOSITORY_NAME: &str = "stremio-lite";
 #[cfg(target_os = "windows")]
-const WINDOWS_ASSET_IDENTIFIER: &str = "stremio-native";
+const WINDOWS_ASSET_IDENTIFIER: &str = "stremio-lite";
 #[cfg(target_os = "windows")]
 const WINDOWS_INSTALLER_NAME: &str = "stremio-installer";
 
@@ -614,8 +614,8 @@ mod tests {
 
     #[test]
     fn updater_targets_the_published_repository() {
-        assert_eq!(REPOSITORY_OWNER, "perpetus");
-        assert_eq!(REPOSITORY_NAME, "stremio-native");
+        assert_eq!(REPOSITORY_OWNER, "nedpranson");
+        assert_eq!(REPOSITORY_NAME, "stremio-lite");
     }
 
     #[test]

@@ -72,7 +72,7 @@ export component TrayPanel inherits Window {
     callback quit();
     callback dismiss();
 
-    title: "Stremio";
+    title: "Stremio Lite";
     width: root.panel-width;
     height: root.panel-height;
     background: Theme.background;
@@ -121,7 +121,7 @@ export component TrayPanel inherits Window {
                         horizontal-stretch: 1;
 
                         Text {
-                            text: "STREMIO NATIVE";
+                            text: "STREMIO LITE";
                             color: Theme.primary-foreground;
                             font-size: 13px;
                             font-weight: 700;
@@ -190,7 +190,7 @@ export component TrayPanel inherits Window {
 
                 TrayMenuItem {
                     icon: @image-url("assets/images/icons/play.svg");
-                    label: @tr("Open Stremio");
+                    label: @tr("Open Stremio Lite");
                     clicked => { root.open-window(); }
                 }
 
@@ -226,7 +226,7 @@ export component TrayPanel inherits Window {
                             : (root.update-state == 2
                                 ? @tr("Update available") + ": v" + root.update-version
                                 : (root.update-state == 3
-                                    ? @tr("Stremio is up to date")
+                                    ? @tr("Stremio Lite is up to date")
                                     : (root.update-state == 4
                                         ? @tr("Update check failed")
                                         : @tr("Current version") + ": v" + root.update-version))));
@@ -266,7 +266,7 @@ export component TrayPanel inherits Window {
                 TrayMenuItem {
                     icon: @image-url("assets/images/icons/exit.svg");
                     icon-color: Theme.danger;
-                    label: @tr("Quit Stremio");
+                    label: @tr("Quit Stremio Lite");
                     label-color: Theme.danger;
                     clicked => { root.quit(); }
                 }

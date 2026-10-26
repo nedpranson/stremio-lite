@@ -118,7 +118,7 @@ pub(crate) fn init_crash_handler(log_dir: &Path) -> Result<CrashReporter> {
             Ok(()) => ::crash_handler::CrashEventResult::Handled(true),
             Err(_) => {
                 ::crash_handler::write_stderr(
-                    "stremio-native: crash monitor could not capture a minidump\n",
+                    "stremio-lite: crash monitor could not capture a minidump\n",
                 );
                 ::crash_handler::CrashEventResult::Handled(false)
             }
@@ -356,7 +356,7 @@ fn run_reporter(args: &ReporterArgs) -> Result<()> {
 fn make_dump_path(crash_dir: &Path, crashed_pid: u32) -> PathBuf {
     let timestamp = Utc::now().format("%Y%m%dT%H%M%S%.3fZ");
     crash_dir.join(format!(
-        "stremio-native-{timestamp}-{crashed_pid}-{}.dmp",
+        "stremio-lite-{timestamp}-{crashed_pid}-{}.dmp",
         Uuid::new_v4().simple()
     ))
 }
@@ -406,11 +406,11 @@ fn append_crash_log(
 fn crash_dialog_message(log_dir: &Path, report: &CrashReport) -> String {
     match (&report.dump_path, &report.error) {
         (Some(path), None) => format!(
-            "Stremio closed unexpectedly.\n\nA diagnostic minidump was saved to:\n{}\n\nPlease include this file and stremio.log when reporting the issue.\n\nOpen the crash reports folder?",
+            "Stremio Lite closed unexpectedly.\n\nA diagnostic minidump was saved to:\n{}\n\nPlease include this file and stremio.log when reporting the issue.\n\nOpen the crash reports folder?",
             path.display()
         ),
         _ => format!(
-            "Stremio closed unexpectedly.\n\nThe crash reporter could not finish writing a minidump. Details were saved to:\n{}\n\nOpen the crash reports folder?",
+            "Stremio Lite closed unexpectedly.\n\nThe crash reporter could not finish writing a minidump. Details were saved to:\n{}\n\nOpen the crash reports folder?",
             log_dir.join("crash.log").display()
         ),
     }
@@ -499,7 +499,7 @@ fn show_crash_dialog(
             let error_str = error_detail;
             move || {
                 let report_text = format!(
-                    "### Stremio Crash Report\n- **Version**: {}\n- **Build**: {}\n- **Minidump**: `{}`\n- **Log**: `{}`\n- **Capture status**: {}\n\n**Process metadata**:\n```\n{}\n```\n",
+                    "### Stremio Lite Crash Report\n- **Version**: {}\n- **Build**: {}\n- **Minidump**: `{}`\n- **Log**: `{}`\n- **Capture status**: {}\n\n**Process metadata**:\n```\n{}\n```\n",
                     env!("CARGO_PKG_VERSION"),
                     env!("STREMIO_BUILD_VERSION"),
                     dump_str,
@@ -518,7 +518,7 @@ fn show_crash_dialog(
 
         dialog.on_report_github({
             move || {
-                let github_url = "https://github.com/stremio-native/stremio-native/issues/new?template=bug_report.md&title=%5BCrash%5D+Application+Crash+Report";
+                let github_url = "https://github.com/nedpranson/stremio-lite/issues/new?template=bug_report.md&title=%5BCrash%5D+Application+Crash+Report";
                 let _ = open::that(github_url);
             }
         });
@@ -553,7 +553,7 @@ fn show_fallback_dialog(message: &str, crash_dir: &Path) {
         core::PCWSTR,
     };
 
-    let title = "Stremio closed unexpectedly";
+    let title = "Stremio Lite closed unexpectedly";
     let title_w = title
         .encode_utf16()
         .chain(std::iter::once(0))
@@ -581,7 +581,7 @@ fn show_fallback_dialog(message: &str, crash_dir: &Path) {
 #[cfg(target_os = "macos")]
 fn show_fallback_dialog(message: &str, crash_dir: &Path) {
     const SCRIPT: &str = r#"on run argv
-set dialogResult to display alert "Stremio closed unexpectedly" message (item 1 of argv) as critical buttons {"Close", "Open Reports"} default button "Open Reports" cancel button "Close"
+set dialogResult to display alert "Stremio Lite closed unexpectedly" message (item 1 of argv) as critical buttons {"Close", "Open Reports"} default button "Open Reports" cancel button "Close"
 return button returned of dialogResult
 end run"#;
 
@@ -602,7 +602,7 @@ fn show_fallback_dialog(message: &str, crash_dir: &Path) {
     let zenity = Command::new("zenity")
         .arg("--question")
         .arg("--no-markup")
-        .arg("--title=Stremio closed unexpectedly")
+        .arg("--title=Stremio Lite closed unexpectedly")
         .arg("--icon-name=dialog-error")
         .arg("--ok-label=Open Reports")
         .arg("--cancel-label=Close")
@@ -615,7 +615,7 @@ fn show_fallback_dialog(message: &str, crash_dir: &Path) {
             .arg("--yesno")
             .arg(message)
             .arg("--title")
-            .arg("Stremio closed unexpectedly")
+            .arg("Stremio Lite closed unexpectedly")
             .status()
             .is_ok_and(|status| status.success()),
         Err(error) => {
@@ -639,7 +639,7 @@ mod tests {
     #[test]
     fn reporter_args_should_ignore_regular_application_launch() {
         let args = [
-            OsString::from("stremio-native"),
+            OsString::from("stremio-lite"),
             OsString::from("stremio://movie"),
         ];
 
@@ -651,7 +651,7 @@ mod tests {
     #[test]
     fn reporter_args_should_parse_hidden_monitor_launch() {
         let args = [
-            OsString::from("stremio-native"),
+            OsString::from("stremio-lite"),
             OsString::from(REPORTER_MODE),
             OsString::from("monitor.sock"),
             OsString::from("logs"),
@@ -671,7 +671,7 @@ mod tests {
     #[test]
     fn reporter_args_should_reject_missing_process_id() {
         let args = [
-            OsString::from("stremio-native"),
+            OsString::from("stremio-lite"),
             OsString::from(REPORTER_MODE),
             OsString::from("monitor.sock"),
             OsString::from("logs"),

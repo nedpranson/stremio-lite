@@ -241,7 +241,7 @@ fn terminate_confirmed_lock_owners(database_path: &Path, confirmed: &[LockingPro
 }
 
 fn prompt_user_db_locked(processes: &[LockingProcess]) -> UserPromptChoice {
-    let title = "Stremio - Database Locked";
+    let title = "Stremio Lite - Database Locked";
     let (message, affirmative_choice) = if processes.is_empty() {
         (
             "The local database is locked, but its owner could not be identified.\n\n\

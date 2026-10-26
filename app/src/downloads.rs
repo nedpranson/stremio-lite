@@ -479,7 +479,7 @@ impl DownloadManager {
         let client = Client::builder()
             .connect_timeout(Duration::from_secs(15))
             .timeout(Duration::from_secs(30))
-            .user_agent("Stremio-Native/1")
+            .user_agent("Stremio-Lite/1")
             .build()
             .unwrap_or_default();
         let (progress, _) = watch::channel(None);

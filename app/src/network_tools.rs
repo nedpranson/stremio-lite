@@ -42,7 +42,7 @@ pub async fn run_speed_test(
     const MAX_BYTES: u64 = 64 * 1024 * 1024;
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
-        .user_agent("Stremio-Native/1")
+        .user_agent("Stremio-Lite/1")
         .build()
         .map_err(|_| NetworkToolError::Unavailable)?;
     let started = Instant::now();

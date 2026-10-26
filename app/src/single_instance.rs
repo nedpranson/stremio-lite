@@ -13,7 +13,7 @@ use tokio::{
 };
 
 const INSTANCE_ADDRESS: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, 35_984);
-const PROTOCOL_MAGIC: &str = "STREMIO_NATIVE/1";
+const PROTOCOL_MAGIC: &str = "STREMIO_LITE/1";
 const MAX_COMMAND_BYTES: usize = 16 * 1024;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -52,7 +52,7 @@ pub async fn acquire(args: impl IntoIterator<Item = OsString>) -> anyhow::Result
         }
         Err(error) => {
             return Err(anyhow::anyhow!(
-                "failed to reserve the Stremio instance endpoint {INSTANCE_ADDRESS}: {error}"
+                "failed to reserve the Stremio Lite instance endpoint {INSTANCE_ADDRESS}: {error}"
             ));
         }
     };
@@ -134,7 +134,7 @@ async fn forward(command: AppCommand) -> anyhow::Result<()> {
     timeout(Duration::from_secs(3), async move {
         let mut stream = TcpStream::connect(INSTANCE_ADDRESS).await.map_err(|error| {
             anyhow::anyhow!(
-                "another process owns the Stremio instance endpoint, but it could not be reached: {error}"
+                "another process owns the Stremio Lite instance endpoint, but it could not be reached: {error}"
             )
         })?;
         let encoded = encode_command(&command)?;
@@ -147,13 +147,13 @@ async fn forward(command: AppCommand) -> anyhow::Result<()> {
         BufReader::new(&mut stream).read_line(&mut response).await?;
         if response.trim_end() != "OK" {
             return Err(anyhow::anyhow!(
-                "another process owns the Stremio instance endpoint but did not accept the command"
+                "another process owns the Stremio Lite instance endpoint but did not accept the command"
             ));
         }
         Ok(())
     })
     .await
-    .map_err(|_| anyhow::anyhow!("timed out contacting the existing Stremio instance"))?
+    .map_err(|_| anyhow::anyhow!("timed out contacting the existing Stremio Lite instance"))?
 }
 
 fn encode_command(command: &AppCommand) -> anyhow::Result<String> {
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn startup_arguments_find_official_deep_link() {
         let args: [std::ffi::OsString; 3] = [
-            "stremio-native".into(),
+            "stremio-lite".into(),
             "--start-hidden".into(),
             "stremio:///detail/movie/tt1254207".into(),
         ];

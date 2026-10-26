@@ -102,8 +102,8 @@ export { CrashDialog } from "crash_dialog.slint";
 
 export component AppTray inherits SystemTrayIcon {
     icon: @image-url("assets/images/app_icon.png");
-    title: "Stremio";
-    tooltip: "Stremio";
+    title: "Stremio Lite";
+    tooltip: "Stremio Lite";
 
     in property <string> version: "";
     in property <int> update-state: 0;
@@ -122,13 +122,13 @@ export component AppTray inherits SystemTrayIcon {
 
     Menu {
         MenuItem {
-            title: "Stremio";
+            title: "Stremio Lite";
             icon: @image-url("assets/images/app_icon.png");
             enabled: false;
         }
         MenuSeparator { }
         MenuItem {
-            title: @tr("Open Stremio");
+            title: @tr("Open Stremio Lite");
             activated => { root.open-window(); }
         }
         MenuItem {
@@ -148,7 +148,7 @@ export component AppTray inherits SystemTrayIcon {
                 : (root.update-state == 2
                     ? @tr("Update available") + ": v" + root.update-version
                     : (root.update-state == 3
-                        ? @tr("Stremio is up to date")
+                        ? @tr("Stremio Lite is up to date")
                         : (root.update-state == 4
                             ? @tr("Update check failed")
                             : @tr("Current version") + ": v" + root.update-version))));
@@ -177,7 +177,7 @@ export component AppTray inherits SystemTrayIcon {
 }
 
 export component MainWindow inherits Window {
-    title: "Stremio";
+    title: "Stremio Lite";
     icon: @image-url("assets/images/app_icon.png");
     preferred-width: 1280px;
     preferred-height: 720px;
@@ -1602,7 +1602,7 @@ export component MainWindow inherits Window {
 
                     Rectangle { horizontal-stretch: 1; background: transparent; }
                     Text {
-                        text: @tr("UPDATER_TITLE" => "A new version of Stremio is available");
+                        text: @tr("UPDATER_TITLE" => "A new version of Stremio Lite is available");
                         color: Theme.background;
                         font-size: root.ui-unit;
                         font-weight: 700;
@@ -2853,7 +2853,7 @@ export component MainWindow inherits Window {
             z: 2000;
             unit: root.ui-unit;
             open: root.update-dialog-open;
-            title: @tr("UPDATER_TITLE" => "A new version of Stremio is available");
+            title: @tr("UPDATER_TITLE" => "A new version of Stremio Lite is available");
             dialog-width: 42 * root.ui-unit;
             dialog-height: 34 * root.ui-unit;
             actions: [
@@ -2897,7 +2897,7 @@ export component MainWindow inherits Window {
                 spacing: root.ui-unit;
 
                 Text {
-                    text: @tr("Stremio v{} is ready to install", root.update-dialog-version);
+                    text: @tr("Stremio Lite v{} is ready to install", root.update-dialog-version);
                     color: Theme.text-primary;
                     font-size: 1.15 * root.ui-unit;
                     font-weight: 700;
@@ -2925,7 +2925,7 @@ export component MainWindow inherits Window {
 
                 if (root.update-dialog-status-state != 0) : Text {
                     text: root.update-dialog-status-state == 1
-                        ? @tr("Downloading Stremio v{}…", root.update-dialog-version)
+                        ? @tr("Downloading Stremio Lite v{}…", root.update-dialog-version)
                         : (root.update-dialog-status-state == 2
                             ? @tr("Could not open the GitHub release page.")
                             : @tr("The update could not be downloaded or launched."));

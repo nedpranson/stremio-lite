@@ -130,7 +130,7 @@ impl DiscordWorker {
                         .as_deref()
                         .unwrap_or("stremio_logo"),
                 )
-                .large_text("Stremio"),
+                .large_text("Stremio Lite"),
         );
 
         let timestamps = match (activity_state.start_timestamp, activity_state.end_timestamp) {

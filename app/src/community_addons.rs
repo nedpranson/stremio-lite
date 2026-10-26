@@ -168,7 +168,7 @@ impl CommunityAddonClient {
         }
         let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(8))
-            .user_agent("Stremio-Native/1")
+            .user_agent("Stremio-Lite/1")
             .build()
             .map_err(|_| CommunityAddonError::Unavailable)?;
         Ok(Self {

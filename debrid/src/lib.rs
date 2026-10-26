@@ -21,7 +21,7 @@ static HTTP_CLIENT: LazyLock<Result<Client, DebridError>> = LazyLock::new(|| {
         .timeout(REQUEST_TIMEOUT)
         .pool_max_idle_per_host(MAX_IDLE_CONNECTIONS_PER_HOST)
         .pool_idle_timeout(IDLE_POOL_TIMEOUT)
-        .user_agent("Stremio-Native/1")
+        .user_agent("Stremio-Lite/1")
         .build()
         .map_err(|_| DebridError::Unavailable)
 });
@@ -230,7 +230,7 @@ impl DebridProvider for HttpDebridProvider {
                     ),
                     ProviderKind::AllDebrid => self
                         .authorized_request(Method::GET, "/magnet/instant", &token)
-                        .query(&[("agent", "StremioNative"), ("magnets[]", hash.as_str())]),
+                        .query(&[("agent", "StremioLite"), ("magnets[]", hash.as_str())]),
                     ProviderKind::Premiumize => self
                         .authorized_request(Method::GET, "/cache/check", &token)
                         .query(&[("items[]", hash.as_str())]),

@@ -159,7 +159,7 @@ fn generate_po_files(translations_src_dir: &Path, output_dir: &Path) -> std::io:
         let lc_messages_dir = output_dir.join(locale).join("LC_MESSAGES");
         std::fs::create_dir_all(&lc_messages_dir)?;
         write_if_changed(
-            &lc_messages_dir.join("stremio-native.po"),
+            &lc_messages_dir.join("stremio-lite.po"),
             po_content.as_bytes(),
         )?;
     }
@@ -175,9 +175,9 @@ fn embed_windows_resources() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=assets/app.ico");
     let mut resources = winres::WindowsResource::new();
     resources.set_icon_with_id("assets/app.ico", "MAINICON");
-    resources.set("FileDescription", "Stremio");
-    resources.set("ProductName", "Stremio");
-    resources.set("OriginalFilename", "stremio-native.exe");
+    resources.set("FileDescription", "Stremio Lite");
+    resources.set("ProductName", "Stremio Lite");
+    resources.set("OriginalFilename", "stremio-lite.exe");
     resources.compile()?;
     Ok(())
 }

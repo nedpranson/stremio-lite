@@ -30,7 +30,7 @@ use url::Url;
 static LAST_SYNC_STATE: OnceLock<Mutex<Option<SyncFingerprint>>> = OnceLock::new();
 static PENDING_ADDON_ORDER: OnceLock<Mutex<Vec<String>>> = OnceLock::new();
 static ADDON_REORDER_LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
-const ADDON_ORDER_STORAGE_KEY: &str = "stremio-native-addon-order";
+const ADDON_ORDER_STORAGE_KEY: &str = "stremio-lite-addon-order";
 
 fn move_item<T>(items: &mut Vec<T>, from: i32, to: i32) -> bool {
     let (Ok(from), Ok(to)) = (usize::try_from(from), usize::try_from(to)) else {

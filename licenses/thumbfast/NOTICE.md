@@ -1,6 +1,6 @@
 # ThumbFast design reference
 
-The native timeline thumbnail implementation in Stremio Native is informed by
+The native timeline thumbnail implementation in Stremio Lite is informed by
 ThumbFast's persistent-worker, coalesced fast-seek, and delayed exact-seek
 design.
 

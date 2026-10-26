@@ -301,7 +301,7 @@ fn download_verified(url: &str, destination: &Path, expected: &str) -> Result<()
 
     println!("cargo:warning=Downloading pinned optimized libmpv runtime from {url}");
     let client = reqwest::blocking::Client::builder()
-        .user_agent("stremio-native-build")
+        .user_agent("stremio-lite-build")
         .timeout(Duration::from_secs(300))
         .build()
         .map_err(|error| io::Error::other(format!("failed to create HTTP client: {error}")))?;

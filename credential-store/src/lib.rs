@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
-const SERVICE_NAME: &str = "stremio-native";
+const SERVICE_NAME: &str = "stremio-lite";
 type MemoryEntry = (SecretKind, Vec<u8>);
 type MemoryEntries = HashMap<CredentialRef, MemoryEntry>;
 

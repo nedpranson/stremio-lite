@@ -51,7 +51,7 @@ const NIN_KEYSELECT: u32 = WM_USER + 1;
 const EDGE_MARGIN: i32 = 8;
 /// The icon resource embedded by `build.rs` through `winres`.
 const ICON_RESOURCE: &str = "MAINICON";
-const WINDOW_CLASS: &str = "StremioTrayHost";
+const WINDOW_CLASS: &str = "StremioLiteTrayHost";
 
 thread_local! {
     /// The popup, reachable from the `WNDPROC` that has no user context.
@@ -245,7 +245,7 @@ unsafe fn notification_icon_data(host: HWND, icon: Option<HICON>) -> NOTIFYICOND
         hIcon: icon.unwrap_or_default(),
         ..Default::default()
     };
-    let tip = wide("Stremio");
+    let tip = wide("Stremio Lite");
     data.szTip[..tip.len()].copy_from_slice(&tip);
     data
 }

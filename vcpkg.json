@@ -1,5 +1,5 @@
 {
-  "name": "stremio-native",
+  "name": "stremio-lite",
   "version-string": "1.0.1",
   "dependencies": [
     {

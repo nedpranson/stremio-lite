@@ -27,7 +27,7 @@ static HTTP_CLIENT: LazyLock<Result<Client, ProviderError>> = LazyLock::new(|| {
         .timeout(REQUEST_TIMEOUT)
         .pool_max_idle_per_host(MAX_IDLE_CONNECTIONS_PER_HOST)
         .pool_idle_timeout(IDLE_POOL_TIMEOUT)
-        .user_agent("Stremio-Native/1")
+        .user_agent("Stremio-Lite/1")
         .build()
         .map_err(|_| ProviderError::Unavailable)
 });

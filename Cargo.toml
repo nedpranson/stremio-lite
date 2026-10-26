@@ -18,7 +18,7 @@ exclude = [
 
 [workspace.package]
 authors = ["perpetus <perpetus.github@gmail.com>"]
-repository = "https://github.com/stremio-native/stremio-native"
+repository = "https://github.com/nedpranson/stremio-lite"
 license = "GPL-3.0-only"
 
 [workspace.dependencies]
