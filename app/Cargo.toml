@@ -65,7 +65,6 @@ media-integrations = { path = "../media-integrations" }
 stream-ranking = { path = "../stream-ranking" }
 souvlaki = { workspace = true }
 keepawake = { workspace = true }
-rodio.workspace = true
 mlua = { workspace = true, optional = true }
 hotpath = { version = "0.23.2", default-features = false }
 
