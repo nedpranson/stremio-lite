@@ -57,7 +57,6 @@ pub fn fetch_and_project(
         *current = media_id.clone();
     }
 
-    // Reset current rating UI immediately
     let weak_init = ui_weak.clone();
     let _ = slint::invoke_from_event_loop(move || {
         if let Some(ui) = weak_init.upgrade() {
@@ -148,9 +147,6 @@ fn project_if_current(ui_weak: &slint::Weak<MainWindow>, target_id: &str, rating
     });
 }
 
-// -----------------------------------------------------------------------------
-// Slug Helpers
-// -----------------------------------------------------------------------------
 fn sanitize_for_slug(title: &str) -> String {
     let title = title.to_lowercase();
     regex_lite_or_str(&title)
@@ -192,9 +188,6 @@ fn to_rt_slugs(title: &str, year: Option<&str>) -> Vec<String> {
     slugs
 }
 
-// -----------------------------------------------------------------------------
-// AniList (GraphQL)
-// -----------------------------------------------------------------------------
 #[derive(Deserialize)]
 struct AniListResponse {
     data: Option<AniListData>,
@@ -235,9 +228,6 @@ async fn fetch_anilist_rating(title: &str) -> Option<String> {
     Some(format!("{score}%"))
 }
 
-// -----------------------------------------------------------------------------
-// Kitsu (JSON API)
-// -----------------------------------------------------------------------------
 #[derive(Deserialize)]
 struct KitsuResponse {
     data: Option<Vec<KitsuItem>>,
@@ -282,9 +272,6 @@ async fn fetch_kitsu_rating(title: &str) -> Option<String> {
     Some(format!("{:.1}", float_val / 10.0))
 }
 
-// -----------------------------------------------------------------------------
-// Rotten Tomatoes
-// -----------------------------------------------------------------------------
 async fn fetch_rotten_tomatoes_rating(
     title: &str,
     year: Option<&str>,
@@ -309,9 +296,6 @@ async fn fetch_rotten_tomatoes_rating(
     None
 }
 
-// -----------------------------------------------------------------------------
-// Metacritic
-// -----------------------------------------------------------------------------
 async fn fetch_metacritic_rating(title: &str, is_tv: bool) -> Option<String> {
     let prefix = if is_tv { "tv" } else { "movie" };
     let slug = sanitize_for_slug(title);
@@ -344,9 +328,6 @@ async fn fetch_metacritic_rating(title: &str, is_tv: bool) -> Option<String> {
     None
 }
 
-// -----------------------------------------------------------------------------
-// Letterboxd
-// -----------------------------------------------------------------------------
 async fn fetch_letterboxd_rating(title: &str) -> Option<String> {
     let slug = sanitize_for_slug(title);
     let url = format!("https://letterboxd.com/film/{slug}/");
@@ -367,9 +348,6 @@ async fn fetch_letterboxd_rating(title: &str) -> Option<String> {
     None
 }
 
-// -----------------------------------------------------------------------------
-// Shared JSON-LD Extractor
-// -----------------------------------------------------------------------------
 fn parse_json_ld_rating(html: &str) -> Option<String> {
     let mut search_from = 0;
     while let Some(start) = html[search_from..].find("<script type=\"application/ld+json\">") {

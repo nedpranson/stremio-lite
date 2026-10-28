@@ -139,7 +139,6 @@ pub fn setup(
         }
     });
 
-    // Type change callback
     ui.on_library_type_changed({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -219,7 +218,6 @@ pub fn setup(
         }
     });
 
-    // Local Search changed callback
     ui.on_library_search_changed({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -233,7 +231,6 @@ pub fn setup(
                 *q = query.to_string();
             }
 
-            // Trigger refresh immediately
             if let Some(ui) = ui_weak.upgrade()
                 && let Ok(model) = runtime.model()
             {
@@ -248,7 +245,6 @@ pub fn setup(
         }
     });
 
-    // Item selection callback
     ui.on_library_item_selected({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -387,12 +383,10 @@ pub fn sync<F: LibraryFilter>(
         .unwrap_or_default();
     ui.set_library_authenticated(authenticated);
 
-    // 1. Filter raw items based on query
     let (raw_items, columns) = {
         let _span = tracing::info_span!("filter_library_items").entered();
         let mut raw_items = Vec::with_capacity(library.catalog.len());
         for item in &library.catalog {
-            // Apply search query match
             if !normalized_query.is_empty() && !item.name.to_lowercase().contains(&normalized_query)
             {
                 continue;

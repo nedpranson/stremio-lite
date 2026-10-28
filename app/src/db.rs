@@ -384,8 +384,6 @@ fn lock_slot<T>(slot: &Mutex<Option<T>>) -> MutexGuard<'_, Option<T>> {
         .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-// === Settings Helpers ===
-
 #[tracing::instrument(skip(key))]
 #[cfg_attr(feature = "profiling", hotpath::measure)]
 pub async fn get_setting(key: &str) -> anyhow::Result<Option<String>> {
@@ -469,8 +467,6 @@ pub async fn set_settings(values: &[(&str, &str)]) -> anyhow::Result<()> {
     transaction.commit().await?;
     Ok(())
 }
-
-// === Logs Helpers ===
 
 #[cfg_attr(feature = "profiling", hotpath::measure)]
 pub async fn insert_log(level: &str, message: &str) -> anyhow::Result<()> {

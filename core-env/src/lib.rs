@@ -145,7 +145,6 @@ impl DesktopEnv {
 
             let router = in_process_router()?;
 
-            // Construct the Tower request
             let (parts, body) = request.into_parts();
             let body_bytes = if matches!(parts.method, http::Method::GET | http::Method::HEAD) {
                 Vec::new()
@@ -154,13 +153,11 @@ impl DesktopEnv {
             };
             let axum_req = Request::from_parts(parts, axum::body::Body::from(body_bytes));
 
-            // Call the router in-memory
             let response = router
                 .oneshot(axum_req)
                 .await
                 .map_err(|e| EnvError::Fetch(e.to_string()))?;
 
-            // Extract the body
             let body_data = axum::body::to_bytes(response.into_body(), usize::MAX)
                 .await
                 .map_err(|e| EnvError::Fetch(e.to_string()))?;

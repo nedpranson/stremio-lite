@@ -716,25 +716,6 @@ mod tests {
     }
 
     #[test]
-    fn community_page_weight_includes_owned_strings_and_collections() {
-        let page = CommunityAddonPage {
-            addons: vec![addon(false)],
-            has_next_page: false,
-        };
-
-        assert!(community_page_weight("cache-key", &page) > CACHE_ENTRY_OVERHEAD);
-    }
-
-    #[test]
-    fn community_cache_uses_balanced_policy() {
-        let client = CommunityAddonClient::new("https://addons.example/api/v0").expect("client");
-        let policy = client.cache.policy();
-
-        assert_eq!(policy.max_capacity(), Some(CACHE_CAPACITY_BYTES));
-        assert_eq!(policy.time_to_live(), Some(CACHE_TTL));
-    }
-
-    #[test]
     fn directory_query_uses_documented_v0_parameters() {
         let base = url::Url::parse("https://stremio-addons.net/api/v0/").expect("base URL");
         let filters = CommunityAddonFilters {

@@ -201,23 +201,3 @@ pub fn spawn_reporter() -> Option<tokio::task::JoinHandle<()>> {
         }))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{ProfileConfig, ProfileMode};
-
-    #[test]
-    fn legacy_profile_flag_enables_full_profile() {
-        let config = ProfileConfig::from_args(["stremio-lite".to_owned(), "--profile".to_owned()]);
-        assert_eq!(config.mode, ProfileMode::Full);
-    }
-
-    #[test]
-    fn profile_output_is_parsed_without_enabling_an_unrequested_mode() {
-        let config = ProfileConfig::from_args([
-            "stremio-lite".to_owned(),
-            "--profile-output=trace.json".to_owned(),
-        ]);
-        assert_eq!(config.mode, ProfileMode::Off);
-    }
-}

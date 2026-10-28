@@ -466,7 +466,6 @@ pub(crate) fn media_grid_metrics(ui: &MainWindow) -> MediaGridMetrics {
     MediaGridMetrics { columns }
 }
 
-// Helper to chunk an owned vector into rows of specified size without cloning
 pub fn chunk_vector_owned<T>(items: Vec<T>, chunk_size: usize) -> Vec<Vec<T>> {
     if items.is_empty() {
         return Vec::new();

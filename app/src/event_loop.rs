@@ -195,8 +195,7 @@ pub fn install_hover_preview_callbacks(
     ui.on_hover_preview_toggle_muted({
         let preview = preview.clone();
         move || {
-            let muted = preview.toggle_muted();
-            tracing::debug!(muted, "hover trailer preview mute toggled");
+            preview.toggle_muted();
         }
     });
 
@@ -1055,10 +1054,5 @@ fn handle_core_event(event: Event, ui_weak: &slint::Weak<MainWindow>) {
                 ui.set_details_loading(false);
             }
         });
-    } else {
-        // Core event payloads can contain credentials, profile identifiers,
-        // and very large library ID lists. The state projections below provide
-        // actionable diagnostics without serializing those payloads to disk.
-        tracing::debug!("core event received");
     }
 }

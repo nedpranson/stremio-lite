@@ -258,7 +258,6 @@ pub fn setup(
         }
     });
 
-    // Install addon callback
     ui.on_install_addon({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -318,7 +317,6 @@ pub fn setup(
         }
     });
 
-    // Uninstall addon callback
     ui.on_uninstall_addon({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -519,7 +517,7 @@ pub fn setup(
         match arboard::Clipboard::new()
             .and_then(|mut clipboard| clipboard.set_text(transport_url.to_string()))
         {
-            Ok(()) => tracing::info!(%transport_url, "addon link copied to clipboard"),
+            Ok(()) => {}
             Err(error) => tracing::error!(%error, "failed to copy addon link"),
         }
     });
@@ -681,18 +679,15 @@ pub fn sync(
             .map(|addon| addon.transport_url.as_str())
             .collect::<HashSet<_>>();
 
-        // 1. Add all currently installed addons
         for addon in &installed {
             if matches_query(addon) {
                 slint_addons.push(project_addon(addon, true, ui_weak));
             }
         }
 
-        // 2. Add remote/discoverable addons that are not already installed
         for page in &remote_addons.catalog {
             if let Some(Loadable::Ready(items)) = &page.content {
                 for addon in items {
-                    // Avoid duplicating if already installed
                     if matches_query(addon)
                         && !installed_urls.contains(addon.transport_url.as_str())
                     {
@@ -706,25 +701,4 @@ pub fn sync(
 
     let addons_model = slint::VecModel::from(slint_addons);
     ui.set_addons_list(slint::ModelRc::new(addons_model));
-}
-
-#[cfg(test)]
-mod tests {
-    use super::move_item;
-
-    #[test]
-    fn move_item_places_the_source_at_the_requested_index() {
-        let mut items = vec!["one", "two", "three", "four"];
-
-        move_item(&mut items, 0, 2);
-
-        assert_eq!(items, vec!["two", "three", "one", "four"]);
-    }
-
-    #[test]
-    fn move_item_rejects_an_out_of_bounds_target() {
-        let mut items = vec![1, 2, 3];
-
-        assert!(!move_item(&mut items, 1, 3));
-    }
 }

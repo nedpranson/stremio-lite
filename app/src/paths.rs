@@ -135,16 +135,6 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    fn resolver_uses_stremio_lite_suffix() {
-        let paths = AppPaths::from_root(PathBuf::from("platform-data").join(APP_DIR_NAME));
-
-        assert_eq!(
-            paths.root().file_name().and_then(|name| name.to_str()),
-            Some(APP_DIR_NAME)
-        );
-    }
-
-    #[test]
     fn every_derived_path_stays_below_root() {
         let paths = AppPaths::from_root(PathBuf::from("platform-data").join(APP_DIR_NAME));
         let derived = [

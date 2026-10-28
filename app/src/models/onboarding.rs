@@ -15,7 +15,6 @@ pub fn fetch_github_changelog(ui: &MainWindow) {
 
         let mut raw_changelog = String::new();
 
-        // 1. Try fetching releases from GitHub API
         let releases_url = "https://api.github.com/repos/nedpranson/stremio-lite/releases";
         if let Ok(res) = client
             .get(releases_url)
@@ -37,7 +36,6 @@ pub fn fetch_github_changelog(ui: &MainWindow) {
             }
         }
 
-        // 2. Fallback: If no releases published yet, fetch recent git commits from GitHub API
         if raw_changelog.trim().is_empty() {
             let commits_url =
                 "https://api.github.com/repos/nedpranson/stremio-lite/commits?per_page=12";
@@ -84,22 +82,15 @@ pub fn setup(ui: &MainWindow, config: &AppConfig) {
         arg == "--force-onboarding" || arg == "--onboarding" || arg == "--test-onboarding"
     });
 
-    // Show onboarding modal on first launch or when forced via CLI argument
     if force_onboarding || !config.onboarding_completed {
-        tracing::info!(
-            force = force_onboarding,
-            "Triggering onboarding wizard popup"
-        );
         ui.set_onboarding_dialog_open(true);
     }
 
-    // Bind onboarding completed callback
     ui.on_onboarding_completed({
         move || {
             let mut cfg = crate::config::load_config();
             cfg.onboarding_completed = true;
             crate::config::save_config(&cfg);
-            tracing::info!("Onboarding completed and saved to configuration.");
         }
     });
 }

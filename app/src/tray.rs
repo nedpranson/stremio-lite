@@ -39,7 +39,7 @@ pub(crate) struct TrayActions {
 pub fn setup(ui: &MainWindow, navigation: &NavigationController) -> anyhow::Result<Tray> {
     install_close_handler(ui);
     let tray = platform::create(TrayActions::new(ui, navigation))?;
-    tracing::info!("system tray initialized");
+    tracing::debug!("system tray initialized");
     Ok(Tray(tray))
 }
 

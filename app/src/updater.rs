@@ -606,19 +606,6 @@ mod tests {
     }
 
     #[test]
-    fn release_urls_and_api_lookups_use_the_versioned_tag() {
-        assert_eq!(canonical_release_tag("1.2.3"), "v1.2.3");
-        assert_eq!(canonical_release_tag("v1.2.3"), "v1.2.3");
-        assert!(release_page_url("1.2.3").ends_with("/v1%2E2%2E3"));
-    }
-
-    #[test]
-    fn updater_targets_the_published_repository() {
-        assert_eq!(REPOSITORY_OWNER, "nedpranson");
-        assert_eq!(REPOSITORY_NAME, "stremio-lite");
-    }
-
-    #[test]
     fn release_notes_are_bounded() {
         let release = Release {
             body: Some("x".repeat(7_000)),

@@ -157,8 +157,6 @@ fn dismissing(action: Box<dyn Fn()>) -> impl FnMut() + 'static {
     }
 }
 
-// ─── Notification-area plumbing ───
-
 /// Explorer broadcasts this after it restarts, and every tray icon has to be
 /// added again.
 fn taskbar_created_message() -> u32 {
@@ -323,8 +321,6 @@ unsafe extern "system" fn panel_wnd_proc(
     // SAFETY: `previous` is Slint's own procedure for this window.
     unsafe { CallWindowProcW(previous, hwnd, msg, wparam, lparam) }
 }
-
-// ─── Popup placement ───
 
 fn hide_panel() {
     with_panel_hwnd(|hwnd| {

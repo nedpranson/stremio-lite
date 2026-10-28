@@ -33,7 +33,6 @@ pub fn setup_ui_callbacks(
     download_manager: Arc<crate::downloads::DownloadManager>,
 ) {
     let ui_weak = ui.as_weak();
-    // Hook up submodel setup functions
     models::auth::setup(ui, runtime);
     models::board::setup(ui, runtime, &navigation);
     models::calendar::setup(ui, runtime, &navigation);
@@ -76,7 +75,6 @@ pub fn setup_ui_callbacks(
         }
     });
 
-    // Play stream action
     ui.on_play_stream({
         let ui_weak = ui_weak.clone();
         let runtime = runtime.clone();

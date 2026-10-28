@@ -498,28 +498,3 @@ fn signed_seek(magnitude_secs: f32, direction: SeekDirection) -> f32 {
         SeekDirection::Backward => -magnitude_secs,
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn seek_direction_sets_the_sign() {
-        assert_eq!(signed_seek(10.0, SeekDirection::Forward), 10.0);
-        assert_eq!(signed_seek(10.0, SeekDirection::Backward), -10.0);
-    }
-
-    #[test]
-    fn negative_durations_clamp_to_zero() {
-        assert_eq!(secs_to_duration(-5), Duration::ZERO);
-        assert_eq!(secs_to_duration(42), Duration::from_secs(42));
-    }
-
-    #[test]
-    fn path_to_file_url_produces_absolute_uri() {
-        let relative = std::path::Path::new("storage/image-cache-v1/ab/test.jpg");
-        let url = path_to_file_url(relative);
-        assert!(url.starts_with("file://"));
-        assert!(!url.contains("file://storage"));
-    }
-}

@@ -624,7 +624,6 @@ pub(crate) fn series_videos(meta: &MetaItem, season: i32) -> Vec<&Video> {
 fn sync_series_details(ui: &MainWindow, meta_item: Option<&MetaItem>, episodes: &[&Video]) {
     let is_series = ui.get_detail_is_series();
     if is_series && let Some(meta) = meta_item {
-        // Get available seasons
         let seasons = ordered_series_seasons(meta);
 
         let slint_seasons: Vec<i32> = seasons.clone();
@@ -920,8 +919,7 @@ pub fn sync(
 
     if presentation == DetailsPresentation::Preview {
         let _span = tracing::info_span!("sync_preview_panel").entered();
-        // User is browsing Discover page and has not clicked Play/Show yet:
-        // Update the right-side split screen preview panel instead of navigating!
+        // Browsing Discover: update the split preview panel instead of navigating.
         ui.set_discover_preview_title(detail_title.into());
         ui.set_discover_preview_description(detail_description.into());
         ui.set_discover_preview_year(detail_released_date.as_ref().into());

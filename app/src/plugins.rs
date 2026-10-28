@@ -1,16 +1,11 @@
 use std::path::{Path, PathBuf};
 
-use mlua::LuaSerdeExt;
 use slint::Model;
 
 use crate::MainWindow;
 
-/// Events dispatched from the application to the Lua plugin runtime.
-#[allow(dead_code)]
 pub enum LuaEvent {
     RunAction(String),
-    SystemEvent(String, serde_json::Value),
-    Reload,
     Shutdown,
 }
 
@@ -24,7 +19,7 @@ impl PluginManager {
     /// Returns `None` (zero overhead) when the directory is empty or missing.
     pub fn new(ui_weak: slint::Weak<MainWindow>, plugin_dir: PathBuf) -> Option<Self> {
         if !has_lua_files(&plugin_dir) {
-            tracing::info!(?plugin_dir, "no plugins found, skipping plugin runtime");
+            tracing::debug!(?plugin_dir, "no plugins found, skipping plugin runtime");
             return None;
         }
 
@@ -40,15 +35,8 @@ impl PluginManager {
             })
             .expect("failed to spawn lua-plugins thread");
 
-        tracing::info!("plugin runtime started");
+        tracing::debug!("plugin runtime started");
         Some(Self { event_tx: tx })
-    }
-
-    #[allow(dead_code)]
-    pub fn send(&self, event: LuaEvent) {
-        if let Err(error) = self.event_tx.try_send(event) {
-            tracing::warn!(%error, "failed to send event to plugin runtime");
-        }
     }
 
     pub fn sender(&self) -> tokio::sync::mpsc::Sender<LuaEvent> {
@@ -87,18 +75,7 @@ fn lua_thread_main(
             LuaEvent::RunAction(id) => {
                 dispatch_lua_event(&lua, "run_action", &id);
             }
-            LuaEvent::SystemEvent(name, data) => {
-                dispatch_lua_system_event(&lua, &name, data);
-            }
-            LuaEvent::Reload => {
-                tracing::info!("reloading plugins");
-                clear_plugin_state(&lua);
-                load_plugins(&lua, &plugin_dir);
-            }
-            LuaEvent::Shutdown => {
-                tracing::info!("plugin runtime shutting down");
-                break;
-            }
+            LuaEvent::Shutdown => break,
         }
     }
 }
@@ -174,13 +151,11 @@ fn init_lua_api(lua: &mlua::Lua, ui_weak: slint::Weak<MainWindow>) -> mlua::Resu
                 })
                 .unwrap_or_default();
 
-            // Store the on_trigger callback in the registry
             if let Ok(func) = table.get::<mlua::Function>("on_trigger") {
                 let callbacks: mlua::Table = lua.named_registry_value("plugin_callbacks")?;
                 callbacks.set(id.clone(), func)?;
             }
 
-            // Update UI with registered actions on the Slint thread
             let action_id = id.clone();
             let action_label = label.clone();
             let action_icon = icon.clone();
@@ -201,29 +176,7 @@ fn init_lua_api(lua: &mlua::Lua, ui_weak: slint::Weak<MainWindow>) -> mlua::Resu
                 }
             });
 
-            tracing::info!(id = %id, label = %label, "plugin registered action");
-            Ok(())
-        })?,
-    )?;
-
-    // app.on_event(name, callback)
-    let event_handlers = lua.create_table()?;
-    lua.set_named_registry_value("event_handlers", event_handlers)?;
-
-    stremio_table.set(
-        "on_event",
-        lua.create_function(|lua, (name, func): (String, mlua::Function)| {
-            let handlers: mlua::Table = lua.named_registry_value("event_handlers")?;
-            let list: mlua::Table = match handlers.get::<mlua::Value>(name.as_str())? {
-                mlua::Value::Table(t) => t,
-                _ => {
-                    let t = lua.create_table()?;
-                    handlers.set(name.as_str(), t.clone())?;
-                    t
-                }
-            };
-            let len = list.len()?;
-            list.set(len + 1, func)?;
+            tracing::debug!(id = %id, label = %label, "plugin registered action");
             Ok(())
         })?,
     )?;
@@ -245,7 +198,7 @@ fn load_plugins(lua: &mlua::Lua, plugin_dir: &Path) {
     for entry in entries.flatten() {
         let path = entry.path();
         if path.extension().is_some_and(|ext| ext == "lua") {
-            tracing::info!(?path, "loading plugin");
+            tracing::debug!(?path, "loading plugin");
             match std::fs::read_to_string(&path) {
                 Ok(source) => {
                     let name = path
@@ -277,31 +230,6 @@ fn dispatch_lua_event(lua: &mlua::Lua, event_name: &str, id: &str) {
     if let Err(error) = result {
         tracing::warn!(%error, event_name, id, "plugin callback error");
     }
-}
-
-fn dispatch_lua_system_event(lua: &mlua::Lua, event_name: &str, data: serde_json::Value) {
-    let result: mlua::Result<()> = (|| {
-        let handlers: mlua::Table = lua.named_registry_value("event_handlers")?;
-        if let mlua::Value::Table(list) = handlers.get::<mlua::Value>(event_name)? {
-            let lua_data = lua.to_value(&data)?;
-            for pair in list.pairs::<mlua::Integer, mlua::Function>() {
-                let (_, func) = pair?;
-                if let Err(error) = func.call::<()>(lua_data.clone()) {
-                    tracing::warn!(%error, event_name, "plugin event handler error");
-                }
-            }
-        }
-        Ok(())
-    })();
-
-    if let Err(error) = result {
-        tracing::warn!(%error, event_name, "plugin system event dispatch error");
-    }
-}
-
-fn clear_plugin_state(lua: &mlua::Lua) {
-    let _ = lua.set_named_registry_value("plugin_callbacks", lua.create_table().unwrap());
-    let _ = lua.set_named_registry_value("event_handlers", lua.create_table().unwrap());
 }
 
 fn has_lua_files(dir: &Path) -> bool {

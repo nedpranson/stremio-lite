@@ -81,7 +81,6 @@ mod window_events;
 mod window_hooks;
 mod window_style;
 
-// Modular sub-files
 mod app_model;
 mod callbacks;
 mod discord;
@@ -91,7 +90,6 @@ mod navigation;
 mod theintrodb;
 mod updater;
 
-// Re-exports/Usage
 pub use app_model::{AppModel, AppModelField};
 pub use discord::DiscordRpc;
 pub use navigation::{DetailsPresentation, NavigationController, NavigationIntent, Tab};
@@ -158,23 +156,16 @@ async fn run_app(
     );
     let initial_config = config::AppConfig::default();
 
-    // Icon fonts are registered/embedded at compile time via app.slint imports.
-    tracing::info!("Icon fonts registered at compile time.");
-
     // Establish the process identity before the window (and thus the media
     // controls) exists, so the OS media overlay can attribute playback to us.
     window_style::set_app_user_model_id();
 
-    // 5. Initialize Slint MainWindow UI
     let ui = MainWindow::new()?;
-    tracing::info!("MainWindow created");
 
-    // Apply Dynamic Theme to Slint Global Theme Singleton
     apply_theme(&ui, &initial_config);
     color_picker::install(&ui);
     theme_studio::install(&ui);
 
-    // Set initial configuration parameters
     let navigation = NavigationController::new(initial_config.active_tab);
     navigation.project(&ui);
     ui.set_settings_application_version(env!("CARGO_PKG_VERSION").into());
@@ -243,7 +234,6 @@ async fn run_app(
         .then(performance::spawn_reporter)
         .flatten();
 
-    tracing::info!("Stremio Lite GUI loop starting...");
     let ui_result = tokio::task::block_in_place(slint::run_event_loop);
     if let Some(reporter) = performance_reporter {
         reporter.abort();
@@ -550,7 +540,6 @@ async fn finish_startup(
         let navigation_tab = navigation.clone();
         ui.on_tab_changed(move |tab| {
             let _tab_span = tracing::info_span!("Tab_Changed", tab = tab).entered();
-            tracing::info!(tab, "active tab changed by user");
             let Ok(selected_tab) = Tab::try_from(tab) else {
                 tracing::warn!(tab, "ignoring invalid tab navigation");
                 return;
@@ -752,7 +741,6 @@ async fn finish_startup(
     if let Some(command) = initial_command {
         deep_link::handle(command, &ui, &runtime, &navigation);
     }
-    tracing::info!("background application startup completed");
     Ok(AppSession {
         server_handle,
         native_playback,

@@ -94,7 +94,7 @@ impl DiscordWorker {
         let mut next_client = DiscordIpcClient::new(DISCORD_APP_ID);
         match next_client.connect() {
             Ok(()) => {
-                tracing::info!("Discord RPC connected successfully");
+                tracing::debug!("Discord RPC connected successfully");
                 self.client = Some(next_client);
                 self.retry_delay = INITIAL_RETRY_DELAY;
                 self.next_retry_at = Instant::now();
@@ -167,7 +167,7 @@ impl DiscordWorker {
         self.retry_delay = INITIAL_RETRY_DELAY;
         self.next_retry_at = Instant::now();
         if let Some(mut current_client) = self.client.take() {
-            tracing::info!("Discord RPC disconnecting");
+            tracing::debug!("Discord RPC disconnecting");
             if let Err(error) = current_client.close() {
                 tracing::error!(%error, "Discord RPC disconnect failed");
             }

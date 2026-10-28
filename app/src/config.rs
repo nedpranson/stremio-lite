@@ -219,7 +219,6 @@ impl AppConfig {
 pub async fn init_config() {
     let mut config = AppConfig::default();
 
-    // 1. Try to load from database settings table
     let mut loaded_from_db = false;
     if let Ok(conn) = crate::db::get_conn().await
         && let Ok(mut rows) = conn

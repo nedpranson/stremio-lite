@@ -85,7 +85,7 @@ async fn request_segments(
         }
     }
 
-    tracing::info!(%url, "fetching TheIntroDB segments");
+    tracing::debug!(%url, "fetching TheIntroDB segments");
     let mut request = client()
         .get(url)
         .header("User-Agent", "TheIntroDB Stremio Lite Client");
@@ -108,7 +108,7 @@ async fn request_segments(
     append_segments(&mut segments, response.recap, "recap", duration_secs);
     append_segments(&mut segments, response.credits, "credits", duration_secs);
     append_segments(&mut segments, response.preview, "preview", duration_secs);
-    tracing::info!(count = segments.len(), "loaded TheIntroDB segments");
+    tracing::debug!(count = segments.len(), "loaded TheIntroDB segments");
     Ok(segments)
 }
 

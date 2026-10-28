@@ -65,7 +65,6 @@ pub fn setup(
         }
     });
 
-    // Type change callback
     ui.on_discover_type_changed({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -99,7 +98,6 @@ pub fn setup(
         }
     });
 
-    // Catalog change callback
     ui.on_discover_catalog_changed({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -133,7 +131,6 @@ pub fn setup(
         }
     });
 
-    // Genre change callback
     ui.on_discover_genre_changed({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -249,7 +246,6 @@ pub fn setup(
         }
     });
 
-    // Search query callback
     ui.on_discover_search_changed({
         let runtime = runtime.clone();
         let ui_weak = ui_weak.clone();
@@ -326,7 +322,6 @@ pub fn setup(
         }
     });
 
-    // Item selection callback
     ui.on_discover_item_selected({
         let runtime = runtime.clone();
         let navigation = navigation.clone();
@@ -452,7 +447,6 @@ pub fn sync(
     pagination_gate().observe(PaginationScope::Discover, pagination_identity);
     ui.set_discover_has_next_page(pagination_identity.is_some());
 
-    // Calculate items count first to compute indices
     let estimated_count = {
         let _span = tracing::info_span!("compute_discover_metrics").entered();
         discover
@@ -482,7 +476,6 @@ pub fn sync(
     // desktop. Account for that drawer when chunking the virtualized grid.
     let columns = metrics.columns.saturating_sub(2).max(4);
 
-    // Compute active filters
     let active_type_raw = discover
         .selected
         .as_ref()
@@ -582,7 +575,6 @@ pub fn sync(
         return;
     }
 
-    // 1. Sync Selectable Types
     let types: Vec<slint::SharedString> = discover
         .selectable
         .types
@@ -599,7 +591,6 @@ pub fn sync(
     ui.set_discover_types(slint::ModelRc::new(types_model));
     ui.set_discover_active_type(active_type.into());
 
-    // 2. Sync Selectable Catalogs
     let catalogs: Vec<slint::SharedString> = discover
         .selectable
         .catalogs
@@ -610,7 +601,6 @@ pub fn sync(
     ui.set_discover_catalogs(slint::ModelRc::new(catalogs_model));
     ui.set_discover_active_catalog(active_catalog.into());
 
-    // 3. Sync Selectable Genres (extra filter named "genre")
     let mut genres = vec![slint::SharedString::from("Genre")];
     if let Some(genre_extra) = discover.selectable.extra.iter().find(|e| e.name == "genre") {
         for opt in &genre_extra.options {

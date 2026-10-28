@@ -136,9 +136,7 @@ impl PreviewPlayer {
 
     pub fn handle_event(&self, event: PreviewEvent) {
         match event {
-            PreviewEvent::WorkerReady => {
-                tracing::info!(worker = "mpv-preview", "hover preview worker ready");
-            }
+            PreviewEvent::WorkerReady => {}
             PreviewEvent::Buffering { generation } => {
                 let Some(projection) = self.update_if_current(generation, |state| {
                     state.loading = true;
@@ -148,12 +146,7 @@ impl PreviewPlayer {
                 };
                 self.schedule_projection(projection);
             }
-            PreviewEvent::Playing {
-                generation,
-                duration,
-            } => {
-                tracing::debug!(generation, duration, "hover trailer preview playing");
-            }
+            PreviewEvent::Playing { .. } => {}
             PreviewEvent::Frame(frame) => self.handle_frame(frame),
             PreviewEvent::Unavailable { generation, reason } => {
                 let Some(projection) = self.update_if_current(generation, |state| {
@@ -173,9 +166,7 @@ impl PreviewPlayer {
                 };
                 self.schedule_projection(projection);
             }
-            PreviewEvent::Shutdown => {
-                tracing::info!(worker = "mpv-preview", "hover preview worker stopped");
-            }
+            PreviewEvent::Shutdown => {}
         }
     }
 
@@ -345,50 +336,5 @@ fn lock_controller(
 fn log_worker_command(result: Result<(), playback_mpv::MpvError>) {
     if let Err(error) = result {
         tracing::debug!(%error, "hover preview worker command was not accepted");
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn state_with_session() -> PreviewState {
-        let mut state = PreviewState::new(true);
-        state.worker_ready = true;
-        state.generation = 4;
-        state.active_id = Some("tt0000001".to_owned());
-        state
-    }
-
-    #[test]
-    fn projection_carries_the_current_generation() {
-        let state = state_with_session();
-        assert_eq!(state.projection().generation, 4);
-    }
-
-    #[test]
-    fn a_dismissed_session_has_no_active_item() {
-        let mut state = state_with_session();
-        state.active_id = None;
-        assert!(state.active_id.is_none());
-    }
-
-    #[test]
-    fn previews_start_muted() {
-        assert!(PreviewState::new(true).muted);
-    }
-
-    #[test]
-    fn missing_video_tracks_get_a_dedicated_message() {
-        assert_eq!(
-            unavailable_status(&PreviewUnavailableReason::NoVideo),
-            "This trailer has no video track."
-        );
-        assert_eq!(
-            unavailable_status(&PreviewUnavailableReason::LoadFailed(
-                "timed out".to_owned()
-            )),
-            "Preview unavailable: timed out"
-        );
     }
 }

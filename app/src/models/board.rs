@@ -266,7 +266,6 @@ pub fn sync(
         return;
     }
 
-    // 1. Sync Continue Watching
     let continue_watching_items: Vec<MediaCardItem> = {
         let _span = tracing::info_span!("sync_continue_watching").entered();
         let saved_stream_keys = runtime
@@ -329,7 +328,6 @@ pub fn sync(
         slint::ModelRc::new(slint::VecModel::from(continue_watching_items));
     ui.set_board_continue_watching(continue_watching_model.clone());
 
-    // 2. Sync Board Sections
     let board_sections = {
         let _span = tracing::info_span!("sync_board_sections").entered();
         let catalog_names = catalog_name_index(addons);

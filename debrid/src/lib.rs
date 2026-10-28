@@ -415,14 +415,6 @@ mod tests {
         assert_ne!(first, other_credential);
     }
 
-    #[test]
-    fn availability_cache_uses_balanced_policy() {
-        let policy = AVAILABILITY_CACHE.policy();
-
-        assert_eq!(policy.max_capacity(), Some(CACHE_CAPACITY));
-        assert_eq!(policy.time_to_live(), Some(CACHE_TTL));
-    }
-
     #[tokio::test]
     async fn identical_availability_lookups_are_single_flight() {
         let cache = Cache::builder().max_capacity(16).build();

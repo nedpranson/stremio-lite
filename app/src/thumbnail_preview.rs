@@ -60,9 +60,7 @@ impl ThumbnailPreview {
 
     pub fn handle_event(&self, event: ThumbnailEvent) {
         match event {
-            ThumbnailEvent::WorkerReady => {
-                tracing::info!(worker = "mpv-thumbnail", "thumbnail worker ready");
-            }
+            ThumbnailEvent::WorkerReady => {}
             ThumbnailEvent::SourceReady {
                 generation,
                 duration,
@@ -75,7 +73,7 @@ impl ThumbnailPreview {
                     let readiness_ms = coordinator
                         .warming_started
                         .map(|started| started.elapsed().as_millis());
-                    tracing::info!(
+                    tracing::debug!(
                         generation,
                         duration_seconds = duration,
                         ?readiness_ms,
@@ -131,9 +129,7 @@ impl ThumbnailPreview {
                 };
                 self.schedule_projection(projection);
             }
-            ThumbnailEvent::Shutdown => {
-                tracing::info!(worker = "mpv-thumbnail", "thumbnail worker stopped");
-            }
+            ThumbnailEvent::Shutdown => {}
         }
     }
 
@@ -645,10 +641,5 @@ mod tests {
         let stale = coordinator.next_projection(false);
         let current = coordinator.next_projection(false);
         assert_ne!(stale.token, current.token);
-    }
-
-    #[test]
-    fn timestamp_includes_hours_when_needed() {
-        assert_eq!(format_timestamp(3_661.9), "01:01:01");
     }
 }

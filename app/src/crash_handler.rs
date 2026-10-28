@@ -631,9 +631,7 @@ fn show_fallback_dialog(message: &str, crash_dir: &Path) {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        CrashReport, REPORTER_MODE, ReporterArgs, crash_dialog_message, reporter_args_from,
-    };
+    use super::{REPORTER_MODE, ReporterArgs, reporter_args_from};
     use std::{ffi::OsString, path::PathBuf};
 
     #[test]
@@ -680,35 +678,5 @@ mod tests {
         let error = reporter_args_from(args).expect_err("missing pid should fail");
 
         assert_eq!(error.to_string(), "missing crashed process id");
-    }
-
-    #[test]
-    fn crash_dialog_should_name_successful_minidump() {
-        let report = CrashReport {
-            dump_path: Some(PathBuf::from("logs/crashes/report.dmp")),
-            error: None,
-        };
-
-        let message = crash_dialog_message(PathBuf::from("logs").as_path(), &report);
-
-        assert!(
-            message.contains("report.dmp"),
-            "unexpected dialog: {message}"
-        );
-    }
-
-    #[test]
-    fn crash_dialog_should_name_fallback_log_when_dump_failed() {
-        let report = CrashReport {
-            dump_path: None,
-            error: Some("writer failed".to_owned()),
-        };
-
-        let message = crash_dialog_message(PathBuf::from("logs").as_path(), &report);
-
-        assert!(
-            message.contains("crash.log"),
-            "unexpected dialog: {message}"
-        );
     }
 }

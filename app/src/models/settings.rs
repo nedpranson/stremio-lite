@@ -855,7 +855,6 @@ pub fn setup(
         .unwrap_or_else(|| config.server_url.clone());
     let connector = Arc::new(AppServerConnector::new(server_url));
 
-    // Fetch initial streaming server settings and coordinate with Turso DB
     let conn_init = connector.clone();
     let ui_weak = ui.as_weak();
     tokio::spawn(async move {
@@ -964,7 +963,6 @@ pub fn setup(
         }
     });
 
-    // Cache size callback
     ui.on_apply_cache_settings({
         let conn = connector.clone();
         let ui_weak = ui.as_weak();
@@ -999,7 +997,6 @@ pub fn setup(
         }
     });
 
-    // Interface language callback
     ui.on_settings_change_interface_language({
         let runtime = runtime.clone();
         move |lang| {
@@ -1029,7 +1026,6 @@ pub fn setup(
         }
     });
 
-    // Subtitles language callback
     ui.on_settings_change_subtitles_language({
         let runtime = runtime.clone();
         move |lang| {
@@ -1055,7 +1051,6 @@ pub fn setup(
         }
     });
 
-    // Torrent profile callback
     ui.on_settings_change_torrent_profile({
         let conn = connector.clone();
         move |profile| {
@@ -1082,7 +1077,6 @@ pub fn setup(
         }
     });
 
-    // Clear search history callback
     ui.on_settings_clear_search_history({
         let runtime = runtime.clone();
         move || {
@@ -1097,15 +1091,12 @@ pub fn setup(
         }
     });
 
-    // Shutdown streaming server callback
     ui.on_shutdown_server(move || {
-        tracing::info!("Closing the app and streaming server...");
         if let Err(error) = slint::quit_event_loop() {
             tracing::error!(%error, "failed to stop the UI event loop");
         }
     });
 
-    // Hardware acceleration toggle callback
     ui.on_settings_change_hardware_acceleration({
         let config_cloned = config.clone();
         let runtime = runtime.clone();
@@ -1131,10 +1122,6 @@ pub fn setup(
                     });
                 }
             });
-            tracing::info!(
-                "Hardware acceleration toggled to: {}. Restart required.",
-                enabled
-            );
         }
     });
 
@@ -1147,7 +1134,6 @@ pub fn setup(
             if let Some(playback) = native_playback.as_ref() {
                 playback.set_thumbnail_previews_enabled(enabled);
             }
-            tracing::info!(enabled, "timeline thumbnail preview preference changed");
         }
     });
 
@@ -1531,7 +1517,6 @@ pub fn setup(
         move |value| update_profile_settings(&runtime, |settings| settings.quit_on_close = value)
     });
 
-    // Custom Client Settings Callbacks
     ui.on_settings_change_seeding_enabled({
         let conn = connector.clone();
         move |enabled| {
@@ -1602,7 +1587,6 @@ pub fn setup(
         }
     });
 
-    // Diagnostics Logs Callbacks
     ui.on_settings_refresh_logs({
         let conn = connector.clone();
         let ui_weak = ui.as_weak();
@@ -1612,7 +1596,6 @@ pub fn setup(
             tokio::spawn(async move {
                 let mut logs_combined = String::new();
 
-                // 1. Fetch Local Application Logs from Turso DB
                 if let Ok(db_logs) = crate::db::get_logs(100).await {
                     logs_combined.push_str("--- Local Application Logs (Turso DB) ---\n");
                     for line in db_logs.iter().rev() {
@@ -1622,7 +1605,6 @@ pub fn setup(
                     logs_combined.push('\n');
                 }
 
-                // 2. Fetch Streaming Server Engine Logs
                 if let Ok(logs) = conn.get_logs().await {
                     let content = logs
                         .current_human_log
