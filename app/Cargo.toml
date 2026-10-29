@@ -60,7 +60,6 @@ uuid = { version = "1.24.0", features = ["v4"] }
 discord-rich-presence = { workspace = true }
 dirs.workspace = true
 credential-store = { path = "../credential-store" }
-debrid = { path = "../debrid" }
 media-integrations = { path = "../media-integrations" }
 stream-ranking = { path = "../stream-ranking" }
 souvlaki = { workspace = true }

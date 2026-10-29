@@ -41,7 +41,6 @@ impl CredentialRef {
 pub enum SecretKind {
     StremioAuth,
     ProviderApiKey,
-    DebridCredential,
     IptvCredential,
     DownloadSource,
     WebhookCredential,

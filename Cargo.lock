@@ -2484,21 +2484,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "debrid"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "credential-store",
- "moka",
- "reqwest 0.13.4",
- "serde",
- "serde_json",
- "thiserror 2.0.20",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "debugid"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9945,7 +9930,6 @@ dependencies = [
  "core-env",
  "crash-handler",
  "credential-store",
- "debrid",
  "dirs",
  "discord-rich-presence",
  "fluent-bundle",

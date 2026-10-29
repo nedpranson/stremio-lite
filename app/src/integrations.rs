@@ -1,9 +1,7 @@
 use std::sync::{Arc, OnceLock};
 
 use credential_store::{CredentialError, CredentialRef, CredentialStore, SecretKind, SecretValue};
-use debrid::{AccountStatus, DebridProvider, HttpDebridProvider, ProviderKind};
 use media_integrations::{HttpMetadataProvider, MetadataProvider};
-use stremio_core::{models::player::Selected, types::resource::StreamSource};
 
 static STORE: OnceLock<Arc<dyn CredentialStore>> = OnceLock::new();
 
@@ -13,8 +11,6 @@ pub enum IntegrationError {
     Credential(#[from] CredentialError),
     #[error("integration database operation failed")]
     Database,
-    #[error("provider connection test failed: {0}")]
-    Provider(#[from] debrid::DebridError),
     #[error("metadata provider failed: {0}")]
     Metadata(#[from] media_integrations::ProviderError),
     #[error("notification configuration is invalid")]
@@ -179,7 +175,6 @@ pub fn install(store: Arc<dyn CredentialStore>) {
 }
 
 pub async fn delete_profile_credentials(profile_id: &str) -> Result<(), IntegrationError> {
-    debrid::invalidate_availability_cache();
     media_integrations::invalidate_response_cache();
     let store = STORE.get().ok_or(CredentialError::Unavailable)?;
     let conn = crate::db::get_conn()
@@ -281,9 +276,7 @@ pub async fn exportable_secrets() -> Result<Vec<(String, SecretKind, Vec<u8>)>, 
         let provider = row
             .get::<String>(1)
             .map_err(|_| IntegrationError::Database)?;
-        let kind = if provider.starts_with("debrid:") {
-            SecretKind::DebridCredential
-        } else if matches!(provider.as_str(), "webhook" | "telegram") {
+        let kind = if matches!(provider.as_str(), "webhook" | "telegram") {
             SecretKind::WebhookCredential
         } else {
             SecretKind::ProviderApiKey
@@ -334,34 +327,6 @@ pub async fn restore_secrets(
             .await?;
     }
     Ok(())
-}
-
-pub async fn configure_debrid(
-    profile_id: &str,
-    provider: ProviderKind,
-    api_key: &str,
-) -> Result<AccountStatus, IntegrationError> {
-    let store = STORE.get().ok_or(CredentialError::Unavailable)?;
-    let reference = debrid_reference(profile_id, provider)?;
-    store
-        .put(
-            &reference,
-            SecretKind::DebridCredential,
-            SecretValue::new(api_key.as_bytes().to_vec()),
-        )
-        .await?;
-    debrid::invalidate_availability_cache();
-    let client = HttpDebridProvider::new(provider, reference.clone(), store.clone())?;
-    let status = match client.account_status().await {
-        Ok(status) => status,
-        Err(error) => {
-            let _ = store.delete(&reference).await;
-            return Err(error.into());
-        }
-    };
-    let metadata = serde_json::to_string(&status).map_err(|_| IntegrationError::Database)?;
-    persist_integration(profile_id, provider, true, Some(&reference), &metadata).await?;
-    Ok(status)
 }
 
 pub async fn configure_metadata_provider(
@@ -439,11 +404,6 @@ pub async fn configured_integration_names(
             .get::<String>(0)
             .map_err(|_| IntegrationError::Database)?;
         let display = match provider.as_str() {
-            "debrid:real-debrid" => "Real-Debrid",
-            "debrid:all-debrid" => "AllDebrid",
-            "debrid:premiumize" => "Premiumize",
-            "debrid:debrid-link" => "Debrid-Link",
-            "debrid:torbox" => "TorBox",
             "metadata:tmdb" => "TMDB",
             "metadata:omdb" => "OMDb",
             "metadata:mdblist" => "MDBList",
@@ -529,123 +489,6 @@ pub async fn enabled_metadata_providers(
     Ok(providers)
 }
 
-pub async fn disconnect_debrid(
-    profile_id: &str,
-    provider: ProviderKind,
-) -> Result<(), IntegrationError> {
-    let store = STORE.get().ok_or(CredentialError::Unavailable)?;
-    let reference = debrid_reference(profile_id, provider)?;
-    store.delete(&reference).await?;
-    debrid::invalidate_availability_cache();
-    persist_integration(profile_id, provider, false, Some(&reference), "{}").await?;
-    Ok(())
-}
-
-pub async fn enabled_debrid_providers(
-    profile_id: &str,
-) -> Result<Vec<Arc<dyn DebridProvider>>, IntegrationError> {
-    let store = STORE.get().ok_or(CredentialError::Unavailable)?;
-    let conn = crate::db::get_conn()
-        .await
-        .map_err(|_| IntegrationError::Database)?;
-    let mut rows = conn
-        .query(
-            "SELECT provider, credential_ref FROM profile_integrations
-             WHERE profile_id = ? AND enabled = 1 AND provider LIKE 'debrid:%'",
-            [profile_id],
-        )
-        .await
-        .map_err(|_| IntegrationError::Database)?;
-    let mut providers = Vec::<Arc<dyn DebridProvider>>::new();
-    while let Some(row) = rows.next().await.map_err(|_| IntegrationError::Database)? {
-        let provider_name: String = row.get(0).map_err(|_| IntegrationError::Database)?;
-        let reference: String = row.get(1).map_err(|_| IntegrationError::Database)?;
-        let Some(provider) = provider_from_db(&provider_name) else {
-            continue;
-        };
-        let reference = CredentialRef::new(reference)?;
-        providers.push(Arc::new(HttpDebridProvider::new(
-            provider,
-            reference,
-            store.clone(),
-        )?));
-    }
-    Ok(providers)
-}
-
-pub async fn resolve_explicit_selection(mut selected: Selected) -> Selected {
-    let StreamSource::Torrent { info_hash, .. } = &selected.stream.source else {
-        return selected;
-    };
-    let hash = hex::encode(info_hash);
-    let magnet = format!("magnet:?xt=urn:btih:{hash}");
-    let Ok(profile_id) = crate::profiles::active_profile_id().await else {
-        return selected;
-    };
-    let Ok(providers) = enabled_debrid_providers(profile_id.as_str()).await else {
-        return selected;
-    };
-    for provider in providers {
-        if !matches!(
-            provider.availability(&hash).await,
-            Ok(debrid::DebridAvailability::Cached)
-        ) {
-            continue;
-        }
-        let Ok(resolved) = provider.resolve(&magnet).await else {
-            continue;
-        };
-        let Ok(url) = resolved.url.parse() else {
-            continue;
-        };
-        selected.stream.source = StreamSource::Url { url };
-        selected.stream.behavior_hints.not_web_ready = false;
-        return selected;
-    }
-    selected
-}
-
-async fn persist_integration(
-    profile_id: &str,
-    provider: ProviderKind,
-    enabled: bool,
-    reference: Option<&CredentialRef>,
-    metadata: &str,
-) -> Result<(), IntegrationError> {
-    let conn = crate::db::get_conn()
-        .await
-        .map_err(|_| IntegrationError::Database)?;
-    conn.execute(
-        "INSERT INTO profile_integrations(
-            profile_id, provider, enabled, credential_ref, metadata_json
-         ) VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT(profile_id, provider) DO UPDATE SET
-            enabled = excluded.enabled,
-            credential_ref = excluded.credential_ref,
-            metadata_json = excluded.metadata_json",
-        (
-            profile_id,
-            provider_db_name(provider),
-            i64::from(enabled),
-            reference.map(CredentialRef::expose_id),
-            metadata,
-        ),
-    )
-    .await
-    .map_err(|_| IntegrationError::Database)?;
-    Ok(())
-}
-
-fn debrid_reference(
-    profile_id: &str,
-    provider: ProviderKind,
-) -> Result<CredentialRef, CredentialError> {
-    CredentialRef::new(format!(
-        "debrid/{profile_id}/{}",
-        provider_db_name(provider).trim_start_matches("debrid:")
-    ))
-}
-
 fn metadata_reference(
     profile_id: &str,
     provider: media_integrations::ProviderKind,
@@ -680,39 +523,5 @@ fn metadata_provider_from_db(value: &str) -> Option<media_integrations::Provider
         "metadata:anizip" => Some(media_integrations::ProviderKind::AniZip),
         "metadata:trakt" => Some(media_integrations::ProviderKind::Trakt),
         _ => None,
-    }
-}
-
-const fn provider_db_name(provider: ProviderKind) -> &'static str {
-    match provider {
-        ProviderKind::RealDebrid => "debrid:real-debrid",
-        ProviderKind::AllDebrid => "debrid:all-debrid",
-        ProviderKind::Premiumize => "debrid:premiumize",
-        ProviderKind::DebridLink => "debrid:debrid-link",
-        ProviderKind::TorBox => "debrid:torbox",
-    }
-}
-
-fn provider_from_db(value: &str) -> Option<ProviderKind> {
-    match value {
-        "debrid:real-debrid" => Some(ProviderKind::RealDebrid),
-        "debrid:all-debrid" => Some(ProviderKind::AllDebrid),
-        "debrid:premiumize" => Some(ProviderKind::Premiumize),
-        "debrid:debrid-link" => Some(ProviderKind::DebridLink),
-        "debrid:torbox" => Some(ProviderKind::TorBox),
-        _ => None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn every_provider_has_a_stable_profile_scoped_reference() {
-        for provider in ProviderKind::ALL {
-            let reference = debrid_reference("owner", provider).expect("reference");
-            assert!(reference.expose_id().starts_with("debrid/owner/"));
-        }
     }
 }

@@ -3,7 +3,6 @@ resolver = "2"
 members = [
     "app",
     "credential-store",
-    "debrid",
     "media-integrations",
     "core-env",
     "playback-mpv",

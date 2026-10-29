@@ -9,7 +9,7 @@ export component IntegrationsManager inherits VerticalLayout {
     in property <length> unit: 16px;
     in property <[string]> configured: [];
     in property <string> status: "";
-    in-out property <string> provider: "Real-Debrid";
+    in-out property <string> provider: "TMDB";
     in-out property <bool> provider-open: false;
     in-out property <string> secret: "";
     in-out property <string> endpoint: "";
@@ -38,13 +38,13 @@ export component IntegrationsManager inherits VerticalLayout {
     SettingsOption {
         unit: root.unit;
         label: @tr("Add Integration");
-        description: @tr("Select Debrid, metadata, or notification provider.");
+        description: @tr("Select a metadata or notification provider.");
         SelectField {
             width: 100%;
             field-width: 16 * root.unit;
             unit: root.unit;
             value: root.provider;
-            options: ["Real-Debrid", "AllDebrid", "Premiumize", "Debrid-Link", "TorBox", "TMDB", "OMDb", "MDBList", "Fanart.tv", "RPDB", "Webhook", "Telegram"];
+            options: ["TMDB", "OMDb", "MDBList", "Fanart.tv", "RPDB", "Webhook", "Telegram"];
             open: root.provider-open;
             toggle => { root.provider-open = !root.provider-open; }
             selected(value) => {

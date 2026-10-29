@@ -106,78 +106,73 @@ pub fn setup_ui_callbacks(
             let ui_weak = ui_weak.clone();
             let runtime = runtime.clone();
             let navigation = navigation.clone();
-            tokio::spawn(async move {
-                // Debrid unrestriction only happens after this explicit click.
-                // Any provider failure leaves the original source untouched.
-                let selected = crate::integrations::resolve_explicit_selection(selected).await;
-                let _ = slint::invoke_from_event_loop(move || {
-                    if let Some(ui) = ui_weak.upgrade() {
-                        let detail_title = ui.get_detail_title().to_string();
-                        let is_series = ui.get_detail_is_series();
-                        let player_title = if is_series {
-                            let active_ep = ui.get_detail_active_episode_idx();
-                            let episodes = ui.get_detail_episodes();
-                            if let Some(ep) = episodes.iter().nth(active_ep as usize) {
-                                let ep_title = ep.title.to_string();
-                                let season = ui.get_detail_active_season();
-                                let ep_num = ep.episode_num;
-                                if !ep_title.is_empty() && ep_title != detail_title {
-                                    if ep_num > 0 && season > 0 {
-                                        format!("{detail_title} - {ep_title} ({season}x{ep_num})")
-                                    } else {
-                                        format!("{detail_title} - {ep_title}")
-                                    }
-                                } else if ep_num > 0 && season > 0 {
-                                    format!("{detail_title} ({season}x{ep_num})")
+            let _ = slint::invoke_from_event_loop(move || {
+                if let Some(ui) = ui_weak.upgrade() {
+                    let detail_title = ui.get_detail_title().to_string();
+                    let is_series = ui.get_detail_is_series();
+                    let player_title = if is_series {
+                        let active_ep = ui.get_detail_active_episode_idx();
+                        let episodes = ui.get_detail_episodes();
+                        if let Some(ep) = episodes.iter().nth(active_ep as usize) {
+                            let ep_title = ep.title.to_string();
+                            let season = ui.get_detail_active_season();
+                            let ep_num = ep.episode_num;
+                            if !ep_title.is_empty() && ep_title != detail_title {
+                                if ep_num > 0 && season > 0 {
+                                    format!("{detail_title} - {ep_title} ({season}x{ep_num})")
                                 } else {
-                                    detail_title.clone()
+                                    format!("{detail_title} - {ep_title}")
                                 }
+                            } else if ep_num > 0 && season > 0 {
+                                format!("{detail_title} ({season}x{ep_num})")
                             } else {
                                 detail_title.clone()
                             }
                         } else {
                             detail_title.clone()
-                        };
-
-                        ui.set_player_title(player_title.into());
-                        ui.set_player_stream_name(stream_name.into());
-                        ui.set_player_poster_image(ui.get_detail_poster());
-                        ui.set_player_video_frame(slint::Image::default());
-                        ui.set_player_has_video_frame(false);
-                        ui.set_player_error("".into());
-                        ui.set_player_loading(true);
-                        ui.set_player_buffering(false);
-                        ui.set_player_buffering_percent(0.0);
-                        ui.set_player_controls_visible(true);
-                        ui.set_player_is_series(is_series);
-                        if is_series {
-                            ui.set_player_seasons(ui.get_detail_seasons());
-                            ui.set_player_active_season(ui.get_detail_active_season());
-                            ui.set_player_episodes(ui.get_detail_episodes());
-                            ui.set_player_active_episode_idx(ui.get_detail_active_episode_idx());
-                            ui.set_player_active_video_id(
-                                selected
-                                    .stream_request
-                                    .as_ref()
-                                    .map(|request| request.path.id.as_str())
-                                    .unwrap_or_default()
-                                    .into(),
-                            );
-                        } else {
-                            ui.set_player_seasons(Default::default());
-                            ui.set_player_episodes(Default::default());
-                            ui.set_player_active_video_id("".into());
-                            ui.set_player_active_episode_idx(0);
                         }
-                        ui.set_player_has_next_episode(false);
-                        ui.invoke_close_player_menus();
-                        ui.invoke_focus_app_shortcuts();
-                        navigation.dispatch_and_project(&ui, NavigationIntent::OpenPlayer);
+                    } else {
+                        detail_title.clone()
+                    };
+
+                    ui.set_player_title(player_title.into());
+                    ui.set_player_stream_name(stream_name.into());
+                    ui.set_player_poster_image(ui.get_detail_poster());
+                    ui.set_player_video_frame(slint::Image::default());
+                    ui.set_player_has_video_frame(false);
+                    ui.set_player_error("".into());
+                    ui.set_player_loading(true);
+                    ui.set_player_buffering(false);
+                    ui.set_player_buffering_percent(0.0);
+                    ui.set_player_controls_visible(true);
+                    ui.set_player_is_series(is_series);
+                    if is_series {
+                        ui.set_player_seasons(ui.get_detail_seasons());
+                        ui.set_player_active_season(ui.get_detail_active_season());
+                        ui.set_player_episodes(ui.get_detail_episodes());
+                        ui.set_player_active_episode_idx(ui.get_detail_active_episode_idx());
+                        ui.set_player_active_video_id(
+                            selected
+                                .stream_request
+                                .as_ref()
+                                .map(|request| request.path.id.as_str())
+                                .unwrap_or_default()
+                                .into(),
+                        );
+                    } else {
+                        ui.set_player_seasons(Default::default());
+                        ui.set_player_episodes(Default::default());
+                        ui.set_player_active_video_id("".into());
+                        ui.set_player_active_episode_idx(0);
                     }
-                    runtime.dispatch(RuntimeAction {
-                        field: None,
-                        action: Action::Load(ActionLoad::Player(Box::new(selected))),
-                    });
+                    ui.set_player_has_next_episode(false);
+                    ui.invoke_close_player_menus();
+                    ui.invoke_focus_app_shortcuts();
+                    navigation.dispatch_and_project(&ui, NavigationIntent::OpenPlayer);
+                }
+                runtime.dispatch(RuntimeAction {
+                    field: None,
+                    action: Action::Load(ActionLoad::Player(Box::new(selected))),
                 });
             });
         }

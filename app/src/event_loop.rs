@@ -87,72 +87,6 @@ pub(crate) fn project_stream_selection_views(
     }
 }
 
-fn schedule_debrid_annotations(
-    runtime: Arc<Runtime<DesktopEnv, AppModel>>,
-    playback_selections: Arc<PlaybackSelections>,
-    ui_weak: slint::Weak<MainWindow>,
-) {
-    let (generation, candidates) = playback_selections.debrid_candidates();
-    if candidates.is_empty() {
-        return;
-    }
-    tokio::spawn(async move {
-        let Ok(profile_id) = crate::profiles::active_profile_id().await else {
-            return;
-        };
-        let Ok(providers) =
-            crate::integrations::enabled_debrid_providers(profile_id.as_str()).await
-        else {
-            return;
-        };
-        if providers.is_empty() {
-            return;
-        }
-        let checks = candidates.into_iter().map(|(selection_id, hash)| {
-            let providers = providers.clone();
-            async move {
-                let results = futures::future::join_all(
-                    providers
-                        .iter()
-                        .map(|provider| provider.availability(&hash)),
-                )
-                .await;
-                let available = if results
-                    .iter()
-                    .any(|result| matches!(result, Ok(debrid::DebridAvailability::Cached)))
-                {
-                    Some(stream_ranking::DebridAvailability::Cached)
-                } else if results
-                    .iter()
-                    .any(|result| matches!(result, Ok(debrid::DebridAvailability::Uncached)))
-                {
-                    Some(stream_ranking::DebridAvailability::Uncached)
-                } else {
-                    None
-                };
-                available.map(|available| (selection_id, available))
-            }
-        });
-        let availability = futures::future::join_all(checks)
-            .await
-            .into_iter()
-            .flatten()
-            .collect();
-        if !playback_selections.apply_debrid_availability(generation, availability) {
-            return;
-        }
-        let views = {
-            let model = runtime.model().expect("model read failed");
-            playback_selections.rebuild(&model.meta_details, &model.ctx.profile.addons)
-        };
-        let _ = slint::invoke_from_event_loop(move || {
-            if let Some(ui) = ui_weak.upgrade() {
-                project_stream_selection_views(&ui, &ui_weak, views);
-            }
-        });
-    });
-}
-
 /// Wires the hover trailer preview popup to the catalog metadata and the
 /// secondary MPV preview engine.
 ///
@@ -678,7 +612,6 @@ pub fn start_event_loop(
                     let ui_weak_for_sync = ui_weak_clone.clone();
                     let runtime_for_sync = runtime.clone();
                     let navigation_for_sync = navigation.clone();
-                    let playback_selections_for_sync = playback_selections.clone();
                     let last_stream_fingerprint_clone = last_stream_fingerprint.clone();
                     let last_details_id_clone = last_details_id.clone();
 
@@ -840,11 +773,6 @@ pub fn start_event_loop(
                                         &ui,
                                         &ui_weak_for_sync,
                                         stream_selection_views,
-                                    );
-                                    schedule_debrid_annotations(
-                                        runtime_for_sync.clone(),
-                                        playback_selections_for_sync.clone(),
-                                        ui_weak_for_sync.clone(),
                                     );
                                 }
                                 if let Some(loading_count) = detail_stream_loading_count {

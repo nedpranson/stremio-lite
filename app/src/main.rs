@@ -1022,46 +1022,6 @@ fn setup_integration_management(ui: &MainWindow) {
                 let result = async {
                     let profile = profiles::active_profile_id().await?;
                     let status = match provider.as_str() {
-                        "Real-Debrid" => format_debrid_status(
-                            integrations::configure_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::RealDebrid,
-                                &secret,
-                            )
-                            .await?,
-                        ),
-                        "AllDebrid" => format_debrid_status(
-                            integrations::configure_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::AllDebrid,
-                                &secret,
-                            )
-                            .await?,
-                        ),
-                        "Premiumize" => format_debrid_status(
-                            integrations::configure_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::Premiumize,
-                                &secret,
-                            )
-                            .await?,
-                        ),
-                        "Debrid-Link" => format_debrid_status(
-                            integrations::configure_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::DebridLink,
-                                &secret,
-                            )
-                            .await?,
-                        ),
-                        "TorBox" => format_debrid_status(
-                            integrations::configure_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::TorBox,
-                                &secret,
-                            )
-                            .await?,
-                        ),
                         "TMDB" | "OMDb" | "MDBList" | "Fanart.tv" | "RPDB" => {
                             integrations::configure_metadata_provider(
                                 profile.as_str(),
@@ -1122,41 +1082,6 @@ fn setup_integration_management(ui: &MainWindow) {
                 let result = async {
                     let profile = profiles::active_profile_id().await?;
                     match provider.as_str() {
-                        "Real-Debrid" => {
-                            integrations::disconnect_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::RealDebrid,
-                            )
-                            .await?
-                        }
-                        "AllDebrid" => {
-                            integrations::disconnect_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::AllDebrid,
-                            )
-                            .await?
-                        }
-                        "Premiumize" => {
-                            integrations::disconnect_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::Premiumize,
-                            )
-                            .await?
-                        }
-                        "Debrid-Link" => {
-                            integrations::disconnect_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::DebridLink,
-                            )
-                            .await?
-                        }
-                        "TorBox" => {
-                            integrations::disconnect_debrid(
-                                profile.as_str(),
-                                debrid::ProviderKind::TorBox,
-                            )
-                            .await?
-                        }
                         "TMDB" | "OMDb" | "MDBList" | "Fanart.tv" | "RPDB" => {
                             integrations::disconnect_metadata_provider(
                                 profile.as_str(),
@@ -1213,15 +1138,6 @@ fn metadata_provider_kind(name: &str) -> Option<media_integrations::ProviderKind
         "Fanart.tv" => Some(media_integrations::ProviderKind::Fanart),
         "RPDB" => Some(media_integrations::ProviderKind::Rpdb),
         _ => None,
-    }
-}
-
-fn format_debrid_status(status: debrid::AccountStatus) -> String {
-    let account = status.username.unwrap_or_else(|| "account".to_owned());
-    match status.expires_at {
-        Some(expires) => format!("Connected {account} · expires {}", expires),
-        None if status.premium => format!("Connected {account} · premium active"),
-        None => format!("Connected {account}"),
     }
 }
 

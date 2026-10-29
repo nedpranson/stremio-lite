@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     sync::{
         RwLock,
-        atomic::{AtomicBool, AtomicU8, AtomicU64, Ordering},
+        atomic::{AtomicBool, AtomicU8, Ordering},
     },
 };
 
@@ -69,9 +69,6 @@ pub struct PlaybackSelections {
     trailer_id: RwLock<Option<String>>,
     ranking_mode: AtomicU8,
     show_filtered: AtomicBool,
-    source_generation: AtomicU64,
-    source_key: RwLock<String>,
-    debrid_availability: RwLock<HashMap<String, stream_ranking::DebridAvailability>>,
 }
 
 impl PlaybackSelections {
@@ -84,11 +81,6 @@ impl PlaybackSelections {
             .trailer_id
             .write()
             .unwrap_or_else(|poisoned| poisoned.into_inner()) = None;
-        self.debrid_availability
-            .write()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .clear();
-        self.source_generation.fetch_add(1, Ordering::AcqRel);
     }
 
     /// Atomically replaces visible stream selections and returns their UI views.
@@ -107,30 +99,6 @@ impl PlaybackSelections {
                     .find(|resource| resource.request.path.eq_no_extra(&selected.meta_path))
             })
             .map(|resource| resource.request.clone());
-        let source_key = meta_request
-            .as_ref()
-            .map(|request| format!("{}:{}", request.path.r#type, request.path.id))
-            .unwrap_or_default();
-        let source_changed = {
-            let mut current = self
-                .source_key
-                .write()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            if *current == source_key {
-                false
-            } else {
-                *current = source_key;
-                true
-            }
-        };
-        if source_changed {
-            self.source_generation.fetch_add(1, Ordering::AcqRel);
-            self.debrid_availability
-                .write()
-                .unwrap_or_else(|poisoned| poisoned.into_inner())
-                .clear();
-        }
-
         let mut next_entries = HashMap::new();
         let mut views = Vec::new();
         let mut rank_inputs = Vec::new();
@@ -254,12 +222,6 @@ impl PlaybackSelections {
                     original_index: rank_inputs.len(),
                     size_bytes,
                     seeders,
-                    debrid: self
-                        .debrid_availability
-                        .read()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner())
-                        .get(&stream_selection_id(resource_index, stream_index))
-                        .copied(),
                 });
             }
         }
@@ -337,43 +299,6 @@ impl PlaybackSelections {
 
     pub fn set_show_filtered(&self, show: bool) {
         self.show_filtered.store(show, Ordering::Release);
-    }
-
-    pub fn debrid_candidates(&self) -> (u64, Vec<(String, String)>) {
-        let availability = self
-            .debrid_availability
-            .read()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        let entries = self
-            .entries
-            .read()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        let candidates = entries
-            .iter()
-            .filter(|(id, _)| !availability.contains_key(*id))
-            .filter_map(|(id, entry)| match &entry.selected.stream.source {
-                stremio_core::types::resource::StreamSource::Torrent { info_hash, .. } => {
-                    Some((id.clone(), hex::encode(info_hash)))
-                }
-                _ => None,
-            })
-            .collect();
-        (self.source_generation.load(Ordering::Acquire), candidates)
-    }
-
-    pub fn apply_debrid_availability(
-        &self,
-        generation: u64,
-        availability: HashMap<String, stream_ranking::DebridAvailability>,
-    ) -> bool {
-        if self.source_generation.load(Ordering::Acquire) != generation {
-            return false;
-        }
-        self.debrid_availability
-            .write()
-            .unwrap_or_else(|poisoned| poisoned.into_inner())
-            .extend(availability);
-        true
     }
 
     /// Resolves the hover trailer preview for an arbitrary catalog item.

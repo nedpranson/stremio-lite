@@ -13,15 +13,6 @@ pub enum RankingMode {
     Original,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum DebridAvailability {
-    Cached,
-    Uncached,
-    Unknown,
-    ProviderUnavailable,
-}
-
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct RankInput {
     pub id: String,
@@ -31,7 +22,6 @@ pub struct RankInput {
     pub original_index: usize,
     pub size_bytes: Option<u64>,
     pub seeders: Option<u32>,
-    pub debrid: Option<DebridAvailability>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -39,7 +29,6 @@ pub struct RankInput {
 pub enum ReasonKind {
     Positive,
     Negative,
-    Neutral,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -252,25 +241,6 @@ fn rank_one(input: RankInput) -> RankedStream {
             format!("{gib:.1} GiB"),
             points,
         );
-    }
-    match input.debrid {
-        Some(DebridAvailability::Cached) => reason(
-            ReasonKind::Positive,
-            "Instant on debrid provider".to_owned(),
-            32,
-        ),
-        Some(DebridAvailability::Uncached) => reason(
-            ReasonKind::Neutral,
-            "Not cached on debrid provider".to_owned(),
-            0,
-        ),
-        Some(DebridAvailability::Unknown | DebridAvailability::ProviderUnavailable) | None => {
-            reason(
-                ReasonKind::Neutral,
-                "Debrid availability unknown".to_owned(),
-                0,
-            )
-        }
     }
     if parsed.suspicious {
         reason(
@@ -653,7 +623,6 @@ mod tests {
             original_index: index,
             size_bytes: Some(size),
             seeders: Some(seeders),
-            debrid: None,
         }
     }
 
@@ -695,18 +664,6 @@ mod tests {
         assert!(rank_streams([fake.clone()], RankingMode::Smart, false).is_empty());
         let visible = rank_streams([fake], RankingMode::Smart, true);
         assert!(visible[0].filtered);
-    }
-
-    #[test]
-    fn provider_outage_is_neutral() {
-        let mut unavailable = input(0, "1080p", 2_000_000_000, 20);
-        unavailable.debrid = Some(DebridAvailability::ProviderUnavailable);
-        let mut unknown = unavailable.clone();
-        unknown.debrid = Some(DebridAvailability::Unknown);
-        assert_eq!(
-            rank_streams([unavailable], RankingMode::Smart, false)[0].score,
-            rank_streams([unknown], RankingMode::Smart, false)[0].score
-        );
     }
 
     #[test]
